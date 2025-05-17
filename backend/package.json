@@ -16,10 +16,12 @@
   "main": "index.js",
   "scripts": {
     "start": "node index.js",
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "importBooks": "node scripts/importBooks.js"
   },
   "dependencies": {
     "@prisma/client": "^6.8.2",
+    "csv-parser": "^3.2.0",
     "express": "^5.1.0",
     "prisma": "^6.8.2"
   },
