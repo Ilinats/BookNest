@@ -27,7 +27,7 @@ model Book {
   author        String
   publishDate   DateTime
   averageRating Float?
-  language      String
+  language      String?
   reviewCount   Int?
   pages         Int
   description   String?
