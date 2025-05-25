@@ -17,13 +17,17 @@
   "scripts": {
     "start": "node index.js",
     "test": "echo \"Error: no test specified\" && exit 1",
-    "importBooks": "node scripts/importBooks.js"
+    "importBooks": "node scripts/importBooks.js",
+    "docs": "echo 'API Documentation available at http://localhost:3000/api-docs'"
   },
   "dependencies": {
     "@prisma/client": "^6.8.2",
     "csv-parser": "^3.2.0",
     "express": "^5.1.0",
-    "prisma": "^6.8.2"
+    "prisma": "^6.8.2",
+    "swagger-jsdoc": "^6.2.8",
+    "swagger-ui-express": "^5.0.1",
+    "zod": "^3.24.4"
   },
   "prisma": {
     "seed": "node prisma/seed.js"
