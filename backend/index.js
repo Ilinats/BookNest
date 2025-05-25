@@ -1,6 +1,7 @@
 const express = require('express');
 const { PrismaClient } = require('@prisma/client');
 const { specs, swaggerUi } = require('./config/swagger');
+
 const bookRoutes = require('./routes/bookRoutes');
 const errorHandler = require('./middleware/errorHandler');
 
@@ -69,4 +70,4 @@ app.listen(PORT, (error) => {
     } else {
         console.error("Error occurred, server can't start", error);
     }
-);
+});
