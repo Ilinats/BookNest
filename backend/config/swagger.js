@@ -1,7 +1,5 @@
 const swaggerJsdoc = require('swagger-jsdoc');
 const swaggerUi = require('swagger-ui-express');
-const isProduction = process.env.NODE_ENV === 'production';
-const vercelUrl = process.env.VERCEL_URL ? `https://${process.env.VERCEL_URL}` : 'https://booknest-8vzt.onrender.com';
 
 const options = {
   definition: {
@@ -21,8 +19,13 @@ const options = {
     },
     servers: [
       {
-        url: isProduction ? vercelUrl : 'http://localhost:3000',
+        url: 'http://localhost:3000',
+        description: 'Development server'
       },
+      {
+        url: 'https://booknest-8vzt.onrender.com',
+        description: 'Production server'
+      }
     ],
     tags: [
       {
