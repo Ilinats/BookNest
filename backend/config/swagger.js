@@ -1,5 +1,7 @@
 const swaggerJsdoc = require('swagger-jsdoc');
 const swaggerUi = require('swagger-ui-express');
+const isProduction = process.env.NODE_ENV === 'production';
+const vercelUrl = process.env.VERCEL_URL;
 
 const options = {
   definition: {
@@ -19,13 +21,8 @@ const options = {
     },
     servers: [
       {
-        url: 'http://localhost:3000',
-        description: 'Development server'
+        url: isProduction ? vercelUrl : 'http://localhost:3000',
       },
-      {
-        url: 'https://your-production-url.com', //TODO: dobavi go
-        description: 'Production server'
-      }
     ],
     tags: [
       {
