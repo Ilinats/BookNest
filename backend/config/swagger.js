@@ -1,7 +1,7 @@
 const swaggerJsdoc = require('swagger-jsdoc');
 const swaggerUi = require('swagger-ui-express');
 const isProduction = process.env.NODE_ENV === 'production';
-const vercelUrl = process.env.VERCEL_URL;
+const vercelUrl = process.env.VERCEL_URL ? `https://${process.env.VERCEL_URL}` : 'https://booknest-8vzt.onrender.com';
 
 const options = {
   definition: {
