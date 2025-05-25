@@ -96,14 +96,16 @@ model LibraryEntry {
 }
 
 model ReadingChallenge {
-  id        Int  @id @default(autoincrement())
-  user      User @relation(fields: [userId], references: [id])
-  userId    Int
-  year      Int
-  goal      Int
-  completed Int  @default(0)
+  id         Int              @id @default(autoincrement())
+  user       User             @relation(fields: [userId], references: [id])
+  userId     Int
+  name       String
+  startDate  DateTime
+  endDate    DateTime
+  goal       Int
+  completed  Int              @default(0)
 
-  entries ChallengeEntry[]
+  entries    ChallengeEntry[]
 }
 
 model ChallengeEntry {
