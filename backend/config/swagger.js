@@ -45,10 +45,6 @@ const options = {
         description: 'User library management endpoints'
       },
       {
-        name: 'Challenges',
-        description: 'Reading challenge endpoints'
-      },
-      {
         name: 'General',
         description: 'General API information'
       }
