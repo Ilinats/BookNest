@@ -19,6 +19,7 @@ const genreRoutes = require('./routes/genreRoutes');
 const friendshipRoutes = require('./routes/friendshipRoutes');
 const readingChallengeRoutes = require('./routes/readingChallengeRoutes');
 const challengeEntryRoutes = require('./routes/challengeEntryRoutes');
+const reviewRoutes = require('./routes/reviewRoutes');
 
 const { authenticate } = require('./middleware/auth');
 const errorHandler = require('./middleware/errorHandler');
@@ -26,27 +27,22 @@ const errorHandler = require('./middleware/errorHandler');
 const app = express();
 const prisma = new PrismaClient();
 
-// Security middleware
 app.use(helmet());
 app.use(cors(config.cors));
 app.use(compression());
 app.use(morgan('combined'));
 
-// Body parsing
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
-// Rate limiting
 app.use(limiter);
 
-// API Documentation
 app.use('/api-docs', swaggerUi.serve, swaggerUi.setup(specs, {
   explorer: true,
   customCss: '.swagger-ui .topbar { display: none }',
   customSiteTitle: "BookNest API Documentation"
 }));
 
-// Prisma middleware
 app.use((req, res, next) => {
   req.prisma = prisma;
   next();
@@ -70,6 +66,21 @@ app.use((req, res, next) => {
  *                 message:
  *                   type: string
  *                   example: "Welcome to BookNest API"
+ *                 documentation:
+ *                   type: string
+ *                   example: "http://localhost:3000/api-docs"
+ *                 endpoints:
+ *                   type: object
+ *                   properties:
+ *                     books:
+ *                       type: string
+ *                       example: "/api/books"
+ *                     users:
+ *                       type: string
+ *                       example: "/api/users"
+ *                     reviews:
+ *                       type: string
+ *                       example: "/api/reviews"
  */
 app.get('/', (req, res) => {
   res.status(200).json({ 
@@ -93,23 +104,16 @@ app.use('/api/genres', authenticate, genreRoutes);
 app.use('/api/friendships', authenticate, friendshipRoutes);
 app.use('/api/reading-challenges', authenticate, readingChallengeRoutes);
 app.use('/api/challenge-entries', authenticate, challengeEntryRoutes);
+app.use('/api/reviews', authenticate, reviewRoutes);
 
-// Error handling
 app.use(errorHandler);
 
-// 404 handler
-// app.use('*', (req, res) => {
-//   res.status(404).json({ error: 'Route not found' });
-// });
-
-// Graceful shutdown
 process.on('SIGINT', async () => {
   console.log('Shutting down gracefully...');
   await prisma.$disconnect();
   process.exit(0);
 });
 
-// Start server
 app.listen(config.port, (error) => {
   if (!error) {
     console.log(`Server is running in ${config.nodeEnv} mode on port ${config.port}`);
