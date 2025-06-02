@@ -22,7 +22,7 @@
     "format": "prettier --write .",
     "importBooks": "node scripts/importBooks.js",
     "docs": "echo 'API Documentation available at http://localhost:3000/api-docs'",
-    "vercel-build": "prisma generate && prisma migrate deploy"
+    "vercel-build": "prisma generate"
   },
   "dependencies": {
     "@prisma/client": "^6.8.2",
