@@ -7,6 +7,7 @@ const helmet = require('helmet');
 const cors = require('cors');
 const compression = require('compression');
 const morgan = require('morgan');
+const path = require('path');
 
 const authRoutes = require('./routes/auth');
 const bookRoutes = require('./routes/bookRoutes');
@@ -30,7 +31,9 @@ const app = express();
 const prisma = new PrismaClient();
 
 // Apply middleware
-app.use(helmet());
+app.use(helmet({
+  contentSecurityPolicy: false, // Disable CSP for Swagger UI
+}));
 app.use(cors(config.cors));
 app.use(compression());
 app.use(morgan('combined'));
@@ -43,11 +46,20 @@ app.use((req, res, next) => {
   next();
 });
 
+// Serve Swagger UI static files
+app.use('/api-docs', express.static(path.join(__dirname, 'node_modules/swagger-ui-dist')));
+
 // Mount Swagger documentation
 app.use('/api-docs', swaggerUi.serve, swaggerUi.setup(specs, {
   explorer: true,
   customCss: '.swagger-ui .topbar { display: none }',
-  customSiteTitle: "BookNest API Documentation"
+  customSiteTitle: "BookNest API Documentation",
+  swaggerOptions: {
+    persistAuthorization: true,
+    docExpansion: 'none',
+    filter: true,
+    showCommonExtensions: true,
+  }
 }));
 
 // Root route
