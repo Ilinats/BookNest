@@ -1,5 +1,5 @@
-const errorHandler = (err, req, res, next) => {
-    console.error(err.stack);
+const errorHandler = (error, req, res, next) => {
+    console.error('Error:', error);
 
     if (err.name === 'ValidationError') {
         return res.status(400).json({
@@ -37,17 +37,16 @@ const errorHandler = (err, req, res, next) => {
         });
     }
 
-    if (err.code === 'P2025') {
-        return res.status(404).json({
-            error: 'Not Found',
-            message: 'The requested record was not found'
+    if (error.name === 'ValidationError') {
+        return res.status(400).json({
+            error: 'Validation error',
+            details: error.message
         });
     }
 
-    // Default error
     res.status(500).json({
-        error: 'Internal Server Error',
-        message: process.env.NODE_ENV === 'development' ? err.message : 'Something went wrong'
+        error: 'Internal server error',
+        details: 'Something went wrong on our end'
     });
 };
 
