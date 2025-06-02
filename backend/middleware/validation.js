@@ -1,4 +1,3 @@
-// middleware/validation.js
 const validateBook = (req, res, next) => {
     const {
         title,

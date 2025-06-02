@@ -27,12 +27,10 @@ const errorHandler = require('./middleware/errorHandler');
 
 const app = express();
 
-// Initialize Prisma
 const prisma = new PrismaClient();
 
-// Apply middleware
 app.use(helmet({
-  contentSecurityPolicy: false, // Disable CSP for Swagger UI
+  contentSecurityPolicy: false,
 }));
 app.use(cors(config.cors));
 app.use(compression());
@@ -59,7 +57,6 @@ app.get('/api-docs', swaggerUi.setup(specs, {
   }
 }));
 
-// Root route
 app.get('/', (req, res) => {
   res.status(200).json({ 
     message: "Welcome to BookNest API",
@@ -68,10 +65,16 @@ app.get('/', (req, res) => {
   });
 });
 
-// Mount routes
+app.get('/health', (req, res) => {
+  res.status(200).json({ 
+    status: 'OK',
+    timestamp: new Date().toISOString(),
+    uptime: process.uptime()
+  });
+});
+
 app.use('/api/auth', authRoutes);
 
-// Protected routes
 app.use('/api/books', authenticate, bookRoutes);
 app.use('/api/users', authenticate, userRoutes);
 app.use('/api/libraries', authenticate, libraryRoutes);
@@ -84,10 +87,8 @@ app.use('/api/reading-challenges', authenticate, readingChallengeRoutes);
 app.use('/api/challenge-entries', authenticate, challengeEntryRoutes);
 app.use('/api/reviews', authenticate, reviewRoutes);
 
-// Error handling
 app.use(errorHandler);
 
-// Only start the server if not in production (Vercel)
 if (process.env.NODE_ENV !== 'production') {
   app.listen(config.port, (error) => {
     if (!error) {
@@ -100,5 +101,4 @@ if (process.env.NODE_ENV !== 'production') {
   });
 }
 
-// Export for Vercel
 module.exports = app;
