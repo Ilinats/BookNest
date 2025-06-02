@@ -8,31 +8,6 @@
   ],
   "routes": [
     {
-      "src": "/api-docs/(.*)",
-      "dest": "index.js"
-    },
-    {
-      "src": "/api-docs/swagger-ui.css",
-      "dest": "node_modules/swagger-ui-dist/swagger-ui.css",
-      "headers": {
-        "Content-Type": "text/css"
-      }
-    },
-    {
-      "src": "/api-docs/swagger-ui-bundle.js",
-      "dest": "node_modules/swagger-ui-dist/swagger-ui-bundle.js",
-      "headers": {
-        "Content-Type": "application/javascript"
-      }
-    },
-    {
-      "src": "/api-docs/swagger-ui-standalone-preset.js",
-      "dest": "node_modules/swagger-ui-dist/swagger-ui-standalone-preset.js",
-      "headers": {
-        "Content-Type": "application/javascript"
-      }
-    },
-    {
       "src": "/(.*)",
       "dest": "index.js"
     }
@@ -40,4 +15,4 @@
   "env": {
     "NODE_ENV": "production"
   }
-} 
+}

@@ -46,11 +46,8 @@ app.use((req, res, next) => {
   next();
 });
 
-// Serve Swagger UI static files
-app.use('/api-docs', express.static(path.join(__dirname, 'node_modules/swagger-ui-dist')));
-
-// Mount Swagger documentation
-app.use('/api-docs', swaggerUi.serve, swaggerUi.setup(specs, {
+app.use('/api-docs', swaggerUi.serve);
+app.get('/api-docs', swaggerUi.setup(specs, {
   explorer: true,
   customCss: '.swagger-ui .topbar { display: none }',
   customSiteTitle: "BookNest API Documentation",
