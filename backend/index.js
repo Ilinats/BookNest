@@ -26,69 +26,43 @@ const errorHandler = require('./middleware/errorHandler');
 
 const app = express();
 
+// Initialize Prisma
+const prisma = new PrismaClient();
+
+// Apply middleware
 app.use(helmet());
 app.use(cors(config.cors));
 app.use(compression());
 app.use(morgan('combined'));
-
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
-app.use(limiter);
+// Add Prisma to request
+app.use((req, res, next) => {
+  req.prisma = prisma;
+  next();
+});
 
+// Mount Swagger documentation
 app.use('/api-docs', swaggerUi.serve, swaggerUi.setup(specs, {
   explorer: true,
   customCss: '.swagger-ui .topbar { display: none }',
   customSiteTitle: "BookNest API Documentation"
 }));
 
-app.use((req, res, next) => {
-  req.prisma = prisma;
-  next();
-});
-
-/**
- * @swagger
- * /:
- *   get:
- *     summary: Welcome message
- *     description: Returns a welcome message for the API
- *     tags: [General]
- *     responses:
- *       200:
- *         description: Welcome message
- *         content:
- *           application/json:
- *             schema:
- *               type: object
- *               properties:
- *                 message:
- *                   type: string
- *                   example: "Welcome to BookNest API"
- *                 documentation:
- *                   type: string
- *                   example: "http://localhost:3000/api-docs"
- *                 endpoints:
- *                   type: object
- *                   properties:
- *                     books:
- *                       type: string
- *                       example: "/api/books"
- *                     users:
- *                       type: string
- *                       example: "/api/users"
- *                     reviews:
- *                       type: string
- *                       example: "/api/reviews"
- */
-res.status(200).json({ 
+// Root route
+app.get('/', (req, res) => {
+  res.status(200).json({ 
     message: "Welcome to BookNest API",
     documentation: `${req.protocol}://${req.get('host')}/api-docs`,
     version: config.api.version
+  });
 });
 
+// Mount routes
 app.use('/api/auth', authRoutes);
 
+// Protected routes
 app.use('/api/books', authenticate, bookRoutes);
 app.use('/api/users', authenticate, userRoutes);
 app.use('/api/libraries', authenticate, libraryRoutes);
@@ -101,9 +75,12 @@ app.use('/api/reading-challenges', authenticate, readingChallengeRoutes);
 app.use('/api/challenge-entries', authenticate, challengeEntryRoutes);
 app.use('/api/reviews', authenticate, reviewRoutes);
 
+// Error handling
 app.use(errorHandler);
 
-app.listen(config.port, (error) => {
+// Only start the server if not in production (Vercel)
+if (process.env.NODE_ENV !== 'production') {
+  app.listen(config.port, (error) => {
     if (!error) {
       console.log(`Server is running in ${config.nodeEnv} mode on port ${config.port}`);
       console.log(`API endpoints available at http://localhost:${config.port}${config.api.prefix}`);
@@ -111,6 +88,8 @@ app.listen(config.port, (error) => {
     } else {
       console.error("Error occurred, server can't start", error);
     }
-});
+  });
+}
 
+// Export for Vercel
 module.exports = app;
