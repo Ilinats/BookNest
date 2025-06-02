@@ -276,6 +276,25 @@ class UserService {
             }
         };
     }
+
+    async getUserReviews(userId) {
+        const reviews = await this.prisma.review.findMany({
+            where: { userId: parseInt(userId) },
+            include: {
+                book: {
+                    select: {
+                        id: true,
+                        title: true,
+                        author: true,
+                        coverUrl: true
+                    }
+                }
+            },
+            orderBy: { createdAt: 'desc' }
+        });
+
+        return reviews;
+    }
 }
 
 module.exports = UserService;

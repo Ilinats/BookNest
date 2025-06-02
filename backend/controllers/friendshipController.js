@@ -1,7 +1,6 @@
 const { PrismaClient } = require('@prisma/client');
 const prisma = new PrismaClient();
 
-// Send a friend request
 const sendFriendRequest = async (req, res) => {
   try {
     const { userId, friendId } = req.body;
@@ -26,7 +25,6 @@ const sendFriendRequest = async (req, res) => {
   }
 };
 
-// Get all friends for a user
 const getUserFriends = async (req, res) => {
   try {
     const { userId } = req.params;

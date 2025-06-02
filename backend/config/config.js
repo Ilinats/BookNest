@@ -34,12 +34,14 @@ const config = {
     level: process.env.LOG_LEVEL || 'info',
   },
 
-  // CORS Configuration
+  // CORS Configuration - Allow everything
   cors: {
-    origin: '*',
+    origin: true, // Allow all origins
     methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH', 'OPTIONS'],
-    allowedHeaders: ['Content-Type', 'Authorization'],
+    allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With', 'Accept'],
     credentials: true,
+    preflightContinue: false,
+    optionsSuccessStatus: 204
   },
 };
 

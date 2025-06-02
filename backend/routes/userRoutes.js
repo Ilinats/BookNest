@@ -351,4 +351,58 @@ router.delete('/:id', userController.deleteUser);
  */
 router.get('/:id/stats', userController.getUserStats);
 
+/**
+ * @swagger
+ * /api/user/profile:
+ *   get:
+ *     summary: Get user profile
+ *     description: Retrieve the current user's profile information
+ *     tags: [Users]
+ *     responses:
+ *       200:
+ *         description: User profile retrieved successfully
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 success:
+ *                   type: boolean
+ *                 data:
+ *                   $ref: '#/components/schemas/User'
+ *       401:
+ *         description: Unauthorized
+ *       500:
+ *         description: Server error
+ */
+router.get('/profile', userController.getProfile);
+
+/**
+ * @swagger
+ * /api/user/reviews:
+ *   get:
+ *     summary: Get user reviews
+ *     description: Retrieve all reviews written by the current user
+ *     tags: [Users]
+ *     responses:
+ *       200:
+ *         description: User reviews retrieved successfully
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 success:
+ *                   type: boolean
+ *                 data:
+ *                   type: array
+ *                   items:
+ *                     $ref: '#/components/schemas/Review'
+ *       401:
+ *         description: Unauthorized
+ *       500:
+ *         description: Server error
+ */
+router.get('/reviews', userController.getUserReviews);
+
 module.exports = router;

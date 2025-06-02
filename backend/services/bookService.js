@@ -198,15 +198,10 @@ const getBooksByAuthor = async (prisma, author) => {
 
 const getTopRatedBooks = async (prisma, limit) => {
     return await prisma.book.findMany({
-        where: {
-            averageRating: {
-                not: null
-            }
-        },
+        take: limit,
         orderBy: {
             averageRating: 'desc'
         },
-        take: limit,
         include: {
             _count: {
                 select: {

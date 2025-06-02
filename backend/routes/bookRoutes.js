@@ -2,6 +2,7 @@ const express = require('express');
 const router = express.Router();
 const bookController = require('../controllers/bookController');
 const { validateBook, validateBookUpdate } = require('../middleware/validation');
+const { authenticate } = require('../middleware/auth');
 
 /**
  * @swagger
@@ -58,26 +59,27 @@ router.get('/', bookController.getAllBooks);
 
 /**
  * @swagger
- * /api/books/{id}:
+ * /api/books/top-rated:
  *   get:
- *     summary: Get a book by ID
- *     description: Retrieve detailed information about a specific book
+ *     summary: Get top rated books
+ *     description: Retrieve a list of the highest rated books
  *     tags: [Books]
  *     parameters:
- *       - $ref: '#/components/parameters/BookId'
+ *       - in: query
+ *         name: limit
+ *         schema:
+ *           type: integer
+ *           default: 10
+ *         description: Number of books to return
  *     responses:
  *       200:
- *         description: Successfully retrieved book
+ *         description: Successfully retrieved top rated books
  *         content:
  *           application/json:
  *             schema:
- *               $ref: '#/components/schemas/BookWithDetails'
- *       404:
- *         description: Book not found
- *         content:
- *           application/json:
- *             schema:
- *               $ref: '#/components/schemas/Error'
+ *               type: array
+ *               items:
+ *                 $ref: '#/components/schemas/Book'
  *       500:
  *         description: Internal server error
  *         content:
@@ -85,7 +87,40 @@ router.get('/', bookController.getAllBooks);
  *             schema:
  *               $ref: '#/components/schemas/Error'
  */
-router.get('/:id', bookController.getBookById);
+router.get('/top-rated', bookController.getTopRatedBooks);
+
+/**
+ * @swagger
+ * /api/books/author/{author}:
+ *   get:
+ *     summary: Get books by author
+ *     description: Retrieve all books by a specific author
+ *     tags: [Books]
+ *     parameters:
+ *       - name: author
+ *         in: path
+ *         required: true
+ *         description: Author name (partial match supported)
+ *         schema:
+ *           type: string
+ *           example: "Fitzgerald"
+ *     responses:
+ *       200:
+ *         description: Successfully retrieved books by author
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: array
+ *               items:
+ *                 $ref: '#/components/schemas/Book'
+ *       500:
+ *         description: Internal server error
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/Error'
+ */
+router.get('/author/:author', bookController.getBooksByAuthor);
 
 /**
  * @swagger
@@ -139,7 +174,38 @@ router.get('/:id', bookController.getBookById);
  *             schema:
  *               $ref: '#/components/schemas/Error'
  */
-router.post('/', validateBook, bookController.createBook);
+router.post('/', authenticate, validateBook, bookController.createBook);
+
+/**
+ * @swagger
+ * /api/books/{id}:
+ *   get:
+ *     summary: Get a book by ID
+ *     description: Retrieve detailed information about a specific book
+ *     tags: [Books]
+ *     parameters:
+ *       - $ref: '#/components/parameters/BookId'
+ *     responses:
+ *       200:
+ *         description: Successfully retrieved book
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/BookWithDetails'
+ *       404:
+ *         description: Book not found
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/Error'
+ *       500:
+ *         description: Internal server error
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/Error'
+ */
+router.get('/:id', bookController.getBookById);
 
 /**
  * @swagger
@@ -192,7 +258,7 @@ router.post('/', validateBook, bookController.createBook);
  *             schema:
  *               $ref: '#/components/schemas/Error'
  */
-router.put('/:id', validateBookUpdate, bookController.updateBook);
+router.put('/:id', authenticate, validateBookUpdate, bookController.updateBook);
 
 /**
  * @swagger
@@ -231,82 +297,6 @@ router.put('/:id', validateBookUpdate, bookController.updateBook);
  *             schema:
  *               $ref: '#/components/schemas/Error'
  */
-router.delete('/:id', bookController.deleteBook);
-
-/**
- * @swagger
- * /api/books/author/{author}:
- *   get:
- *     summary: Get books by author
- *     description: Retrieve all books by a specific author
- *     tags: [Books]
- *     parameters:
- *       - name: author
- *         in: path
- *         required: true
- *         description: Author name (partial match supported)
- *         schema:
- *           type: string
- *           example: "Fitzgerald"
- *     responses:
- *       200:
- *         description: Successfully retrieved books by author
- *         content:
- *           application/json:
- *             schema:
- *               type: array
- *               items:
- *                 $ref: '#/components/schemas/Book'
- *       500:
- *         description: Internal server error
- *         content:
- *           application/json:
- *             schema:
- *               $ref: '#/components/schemas/Error'
- */
-router.get('/author/:author', bookController.getBooksByAuthor);
-
-/**
- * @swagger
- * /api/books/top-rated:
- *   get:
- *     summary: Get top-rated books
- *     description: Retrieve books with the highest average ratings
- *     tags: [Books]
- *     parameters:
- *       - name: limit
- *         in: query
- *         description: Number of top-rated books to return
- *         schema:
- *           type: integer
- *           minimum: 1
- *           maximum: 50
- *           default: 10
- *           example: 10
- *     responses:
- *       200:
- *         description: Successfully retrieved top-rated books
- *         content:
- *           application/json:
- *             schema:
- *               type: array
- *               items:
- *                 allOf:
- *                   - $ref: '#/components/schemas/Book'
- *                   - type: object
- *                     properties:
- *                       _count:
- *                         type: object
- *                         properties:
- *                           reviews:
- *                             type: integer
- *       500:
- *         description: Internal server error
- *         content:
- *           application/json:
- *             schema:
- *               $ref: '#/components/schemas/Error'
- */
-router.get('/top-rated', bookController.getTopRatedBooks);
+router.delete('/:id', authenticate, bookController.deleteBook);
 
 module.exports = router;
