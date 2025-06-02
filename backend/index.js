@@ -25,7 +25,6 @@ const { authenticate } = require('./middleware/auth');
 const errorHandler = require('./middleware/errorHandler');
 
 const app = express();
-const prisma = new PrismaClient();
 
 app.use(helmet());
 app.use(cors(config.cors));
@@ -82,18 +81,14 @@ app.use((req, res, next) => {
  *                       type: string
  *                       example: "/api/reviews"
  */
-app.get('/', (req, res) => {
-  res.status(200).json({ 
+res.status(200).json({ 
     message: "Welcome to BookNest API",
     documentation: `${req.protocol}://${req.get('host')}/api-docs`,
     version: config.api.version
-  });
 });
 
-// Public routes (no authentication required)
-app.use('/api/auth', authLimiter, authRoutes);
+app.use('/api/auth', authRoutes);
 
-// Protected routes (authentication required)
 app.use('/api/books', authenticate, bookRoutes);
 app.use('/api/users', authenticate, userRoutes);
 app.use('/api/libraries', authenticate, libraryRoutes);
@@ -108,18 +103,14 @@ app.use('/api/reviews', authenticate, reviewRoutes);
 
 app.use(errorHandler);
 
-process.on('SIGINT', async () => {
-  console.log('Shutting down gracefully...');
-  await prisma.$disconnect();
-  process.exit(0);
+app.listen(config.port, (error) => {
+    if (!error) {
+      console.log(`Server is running in ${config.nodeEnv} mode on port ${config.port}`);
+      console.log(`API endpoints available at http://localhost:${config.port}${config.api.prefix}`);
+      console.log(`📚 API Documentation available at http://localhost:${config.port}/api-docs`);
+    } else {
+      console.error("Error occurred, server can't start", error);
+    }
 });
 
-app.listen(config.port, (error) => {
-  if (!error) {
-    console.log(`Server is running in ${config.nodeEnv} mode on port ${config.port}`);
-    console.log(`API endpoints available at http://localhost:${config.port}${config.api.prefix}`);
-    console.log(`📚 API Documentation available at http://localhost:${config.port}/api-docs`);
-  } else {
-    console.error("Error occurred, server can't start", error);
-  }
-});
+module.exports = app;
