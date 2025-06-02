@@ -166,44 +166,78 @@ class ReviewService {
             throw new Error('One or more genre IDs are invalid');
         }
 
-        const review = await this.prisma.review.create({
-            data: {
+        // Find the Read folder
+        const readFolder = await this.prisma.library.findFirst({
+            where: {
                 userId: parseInt(userId),
-                bookId: parseInt(bookId),
-                rating: parseFloat(rating),
-                text,
-                pace,
-                focus,
-                lovable,
-                contentWarnings,
-                moods: {
-                    connect: moodIds.map(id => ({ id: parseInt(id) }))
-                },
-                tropes: {
-                    connect: tropeIds.map(id => ({ id: parseInt(id) }))
-                },
-                genres: {
-                    connect: genreIds.map(id => ({ id: parseInt(id) }))
-                }
-            },
-            include: {
-                user: {
-                    select: {
-                        id: true,
-                        username: true
-                    }
-                },
-                book: {
-                    select: {
-                        id: true,
-                        title: true,
-                        author: true
-                    }
-                },
-                moods: true,
-                tropes: true,
-                genres: true
+                name: 'Read'
             }
+        });
+
+        if (!readFolder) {
+            throw new Error('Read folder not found');
+        }
+
+        // Create the review and add book to Read folder in a transaction
+        const review = await this.prisma.$transaction(async (prisma) => {
+            const newReview = await prisma.review.create({
+                data: {
+                    userId: parseInt(userId),
+                    bookId: parseInt(bookId),
+                    rating: parseFloat(rating),
+                    text,
+                    pace,
+                    focus,
+                    lovable,
+                    contentWarnings,
+                    moods: {
+                        connect: moodIds.map(id => ({ id: parseInt(id) }))
+                    },
+                    tropes: {
+                        connect: tropeIds.map(id => ({ id: parseInt(id) }))
+                    },
+                    genres: {
+                        connect: genreIds.map(id => ({ id: parseInt(id) }))
+                    }
+                },
+                include: {
+                    user: {
+                        select: {
+                            id: true,
+                            username: true
+                        }
+                    },
+                    book: {
+                        select: {
+                            id: true,
+                            title: true,
+                            author: true
+                        }
+                    },
+                    moods: true,
+                    tropes: true,
+                    genres: true
+                }
+            });
+
+            // Add book to Read folder if not already there
+            const existingEntry = await prisma.libraryEntry.findFirst({
+                where: {
+                    libraryId: readFolder.id,
+                    bookId: parseInt(bookId)
+                }
+            });
+
+            if (!existingEntry) {
+                await prisma.libraryEntry.create({
+                    data: {
+                        libraryId: readFolder.id,
+                        bookId: parseInt(bookId)
+                    }
+                });
+            }
+
+            return newReview;
         });
 
         // Update book's average rating and review count

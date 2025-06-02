@@ -117,6 +117,42 @@ class UserController {
             next(error);
         }
     };
+
+    getProfile = async (req, res, next) => {
+        try {
+            if (!this.userService) {
+                this.initializeService(req.prisma);
+            }
+
+            const userId = req.user.id;
+            const user = await this.userService.getUserById(userId);
+            
+            res.status(200).json({
+                success: true,
+                data: user
+            });
+        } catch (error) {
+            next(error);
+        }
+    };
+
+    getUserReviews = async (req, res, next) => {
+        try {
+            if (!this.userService) {
+                this.initializeService(req.prisma);
+            }
+
+            const userId = req.user.id;
+            const reviews = await this.userService.getUserReviews(userId);
+            
+            res.status(200).json({
+                success: true,
+                data: reviews
+            });
+        } catch (error) {
+            next(error);
+        }
+    };
 }
 
 module.exports = new UserController();
