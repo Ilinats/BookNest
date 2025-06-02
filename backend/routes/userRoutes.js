@@ -358,6 +358,8 @@ router.get('/:id/stats', userController.getUserStats);
  *     summary: Get user profile
  *     description: Retrieve the current user's profile information
  *     tags: [Users]
+ *     security:
+ *       - bearerAuth: []
  *     responses:
  *       200:
  *         description: User profile retrieved successfully

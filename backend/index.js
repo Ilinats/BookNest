@@ -1,6 +1,7 @@
 const express = require('express');
 const { PrismaClient } = require('@prisma/client');
 const { specs, swaggerUi } = require('./config/swagger');
+const { authenticate } = require('./middleware/auth.js');
 
 const bookRoutes = require('./routes/bookRoutes');
 const userRoutes = require('./routes/userRoutes');
@@ -14,6 +15,7 @@ const tropeRoutes = require('./routes/tropeRoutes');
 const genreRoutes = require('./routes/genreRoutes');
 const moodRoutes = require('./routes/moodRoutes');
 const libraryEntryRoutes = require('./routes/libraryEntryRoutes');
+const authenticateRoutes = require('./routes/auth.js');
 
 const app = express();
 const prisma = new PrismaClient();
@@ -26,6 +28,8 @@ app.use('/api-docs', swaggerUi.serve, swaggerUi.setup(specs, {
   customCss: '.swagger-ui .topbar { display: none }',
   customSiteTitle: "BookNest API Documentation"
 }));
+
+app.use('/api/auth', authenticateRoutes);
 
 app.use((req, res, next) => {
     req.prisma = prisma;
@@ -85,17 +89,17 @@ app.get('/', (req, res) => {
     });
 });
 
-app.use('/api/books', bookRoutes);
-app.use('/api/users', userRoutes);
-app.use('/api/libraries', libraryRoutes);
-app.use('/api/library-entries', libraryEntryRoutes);
-app.use('/api/moods', moodRoutes);
-app.use('/api/tropes', tropeRoutes);
-app.use('/api/genres', genreRoutes);
-app.use('/api/friendships', friendshipRoutes);
-app.use('/api/reading-challenges', readingChallengeRoutes);
-app.use('/api/challenge-entries', challengeEntryRoutes);
-app.use('/api/reviews', reviewRoutes);
+app.use('/api/books', authenticate, bookRoutes);
+app.use('/api/users', authenticate, userRoutes);
+app.use('/api/libraries', authenticate, libraryRoutes);
+app.use('/api/library-entries', authenticate, libraryEntryRoutes);
+app.use('/api/moods', authenticate, moodRoutes);
+app.use('/api/tropes', authenticate, tropeRoutes);
+app.use('/api/genres', authenticate, genreRoutes);
+app.use('/api/friendships', authenticate, friendshipRoutes);
+app.use('/api/reading-challenges', authenticate, readingChallengeRoutes);
+app.use('/api/challenge-entries', authenticate, challengeEntryRoutes);
+app.use('/api/reviews', authenticate, reviewRoutes);
 
 app.use(errorHandler);
 
