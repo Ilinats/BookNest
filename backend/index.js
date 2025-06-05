@@ -22,8 +22,9 @@ const authenticateRoutes = require('./routes/auth.js');
 const app = express();
 // app.options('*', cors()); // handle preflight requests
 app.use(cors({
-  origin: '*', // or specify allowed origin like: 'http://localhost:19006'
-  credentials: true,
+  origin: '*', // or restrict to your frontend's origin
+  methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
+  allowedHeaders: ['Content-Type', 'Authorization'],
 }));
 const prisma = new PrismaClient();
 const PORT = process.env.PORT || 3000;
