@@ -34,9 +34,8 @@ const config = {
     level: process.env.LOG_LEVEL || 'info',
   },
 
-  // CORS Configuration - Allow everything
   cors: {
-    origin: true, // Allow all origins
+    origin: true,
     methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH', 'OPTIONS'],
     allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With', 'Accept'],
     credentials: true,
