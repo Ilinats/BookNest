@@ -17,6 +17,7 @@ const loginSchema = z.object({
 });
 
 const register = async (req, res) => {
+    res.set('Access-Control-Allow-Origin', req.get('origin'));
   try {
     const { username, email, password } = registerSchema.parse(req.body);
 
@@ -67,6 +68,7 @@ const register = async (req, res) => {
 };
 
 const login = async (req, res) => {
+    res.set('Access-Control-Allow-Origin', req.get('origin'));
   try {
     const { email, password } = loginSchema.parse(req.body);
 

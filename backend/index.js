@@ -21,12 +21,12 @@ const authenticateRoutes = require('./routes/auth.js');
 
 const app = express();
 
-app.use(cors({
-  origin: '*', // or restrict to your frontend's origin
-  methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
-  allowedHeaders: ['Content-Type', 'Authorization'],
-  preflightContinue: true
-}));
+// app.use(cors({
+//   origin: '*', // or restrict to your frontend's origin
+//   methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
+//   allowedHeaders: ['Content-Type', 'Authorization'],
+//   preflightContinue: true
+// }));
 const prisma = new PrismaClient();
 const PORT = process.env.PORT || 3000;
 
