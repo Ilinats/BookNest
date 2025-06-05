@@ -1,5 +1,6 @@
 const swaggerJsdoc = require('swagger-jsdoc');
 const swaggerUi = require('swagger-ui-express');
+const path = require('path');
 
 const options = {
   definition: {
@@ -50,7 +51,7 @@ const options = {
       }
     ],
     components: {
-              securitySchemes: {
+      securitySchemes: {
         bearerAuth: {
           type: 'http',
           scheme: 'bearer',
@@ -413,7 +414,11 @@ const options = {
       }
     }
   },
-  apis: ['./routes/*.js', './controllers/*.js', './index.js']
+  apis: [
+    path.join(__dirname, '../routes/*.js'),
+    path.join(__dirname, '../controllers/*.js'),
+    path.join(__dirname, '../index.js')
+  ]
 };
 
 // Add error handling for swagger-jsdoc
@@ -423,6 +428,7 @@ try {
   console.log('Swagger documentation generated successfully');
 } catch (error) {
   console.error('Error generating Swagger documentation:', error.message);
+  console.error('Error details:', error);
   
   // Create a minimal fallback spec
   specs = {
