@@ -21,16 +21,19 @@ const authenticateRoutes = require('./routes/auth.js');
 
 const app = express();
 // app.options('*', cors()); // handle preflight requests
-app.use(cors()); // Allow CORS
+app.use(cors({
+  origin: '*', // or specify allowed origin like: 'http://localhost:19006'
+  credentials: true,
+}));
 const prisma = new PrismaClient();
 const PORT = process.env.PORT || 3000;
 
-app.use((req, res, next) => {
-  res.header('Access-Control-Allow-Origin', '*'); // Allow all origins
-  res.header('Access-Control-Allow-Methods', 'GET,PUT,POST,DELETE,OPTIONS');
-  res.header('Access-Control-Allow-Headers', 'Content-Type, Authorization');
-  next();
-});
+// app.use((req, res, next) => {
+//   res.header('Access-Control-Allow-Origin', '*'); // Allow all origins
+//   res.header('Access-Control-Allow-Methods', 'GET,PUT,POST,DELETE,OPTIONS');
+//   res.header('Access-Control-Allow-Headers', 'Content-Type, Authorization');
+//   next();
+// });
 
 app.use(express.json());
 
