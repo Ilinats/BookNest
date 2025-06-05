@@ -15,6 +15,8 @@ const tropeController = require('../controllers/tropeController');
  *   post:
  *     summary: Create a new trope
  *     tags: [Tropes]
+ *     security:
+ *       - bearerAuth: []
  *     requestBody:
  *       required: true
  *       content:
@@ -40,6 +42,8 @@ router.post('/', tropeController.createTrope);
  *   get:
  *     summary: Get all tropes
  *     tags: [Tropes]
+ *     security:
+ *       - bearerAuth: []
  *     responses:
  *       200:
  *         description: List of tropes
@@ -54,6 +58,8 @@ router.get('/', tropeController.getAllTropes);
  *   get:
  *     summary: Get a specific trope
  *     tags: [Tropes]
+ *     security:
+ *       - bearerAuth: []
  *     parameters:
  *       - in: path
  *         name: id
@@ -75,6 +81,8 @@ router.get('/:id', tropeController.getTrope);
  *   put:
  *     summary: Update a trope
  *     tags: [Tropes]
+ *     security:
+ *       - bearerAuth: []
  *     parameters:
  *       - in: path
  *         name: id
@@ -105,6 +113,8 @@ router.put('/:id', tropeController.updateTrope);
  *   delete:
  *     summary: Delete a trope
  *     tags: [Tropes]
+ *     security:
+ *       - bearerAuth: []
  *     parameters:
  *       - in: path
  *         name: id

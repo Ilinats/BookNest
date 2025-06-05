@@ -15,6 +15,8 @@ const genreController = require('../controllers/genreController');
  *   post:
  *     summary: Create a new genre
  *     tags: [Genres]
+ *     security:
+ *       - bearerAuth: []
  *     requestBody:
  *       required: true
  *       content:
@@ -40,6 +42,8 @@ router.post('/', genreController.createGenre);
  *   get:
  *     summary: Get all genres
  *     tags: [Genres]
+ *     security:
+ *       - bearerAuth: []
  *     responses:
  *       200:
  *         description: List of genres
@@ -75,6 +79,8 @@ router.get('/:id', genreController.getGenre);
  *   put:
  *     summary: Update a genre
  *     tags: [Genres]
+ *     security:
+ *       - bearerAuth: []
  *     parameters:
  *       - in: path
  *         name: id
@@ -105,6 +111,8 @@ router.put('/:id', genreController.updateGenre);
  *   delete:
  *     summary: Delete a genre
  *     tags: [Genres]
+ *     security:
+ *       - bearerAuth: []
  *     parameters:
  *       - in: path
  *         name: id

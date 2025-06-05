@@ -260,6 +260,8 @@ const router = express.Router();
  *     summary: Get all reviews
  *     description: Retrieve a paginated list of reviews with optional filtering
  *     tags: [Reviews]
+ *     security:
+ *       - bearerAuth: []
  *     parameters:
  *       - in: query
  *         name: page
@@ -348,6 +350,8 @@ router.get('/', reviewController.getAllReviews);
  *     summary: Get review options
  *     description: Retrieve available options for creating/updating reviews (moods, tropes, genres, etc.)
  *     tags: [Reviews]
+ *     security:
+ *       - bearerAuth: []
  *     responses:
  *       200:
  *         description: Review options retrieved successfully
@@ -372,6 +376,8 @@ router.get('/options', reviewController.getReviewOptions);
  *     summary: Get a review by ID
  *     description: Retrieve detailed information about a specific review
  *     tags: [Reviews]
+ *     security:
+ *       - bearerAuth: []
  *     parameters:
  *       - in: path
  *         name: id
@@ -405,6 +411,8 @@ router.get('/:id', reviewController.getReviewById);
  *     summary: Create a new review
  *     description: Create a new book review
  *     tags: [Reviews]
+ *     security:
+ *       - bearerAuth: []
  *     requestBody:
  *       required: true
  *       content:
@@ -441,6 +449,8 @@ router.post('/', reviewController.createReview);
  *     summary: Update a review
  *     description: Update an existing review
  *     tags: [Reviews]
+ *     security:
+ *       - bearerAuth: []
  *     parameters:
  *       - in: path
  *         name: id
@@ -484,6 +494,8 @@ router.put('/:id', reviewController.updateReview);
  *     summary: Delete a review
  *     description: Delete a review and update book statistics
  *     tags: [Reviews]
+ *     security:
+ *       - bearerAuth: []
  *     parameters:
  *       - in: path
  *         name: id
@@ -520,6 +532,8 @@ router.delete('/:id', reviewController.deleteReview);
  *     summary: Get reviews by user
  *     description: Retrieve all reviews written by a specific user
  *     tags: [Reviews]
+ *     security:
+ *       - bearerAuth: []
  *     parameters:
  *       - in: path
  *         name: userId
@@ -582,6 +596,8 @@ router.get('/user/:userId', reviewController.getReviewsByUser);
  *     summary: Get reviews by book
  *     description: Retrieve all reviews for a specific book
  *     tags: [Reviews]
+ *     security:
+ *       - bearerAuth: []
  *     parameters:
  *       - in: path
  *         name: bookId

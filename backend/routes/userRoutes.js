@@ -118,6 +118,8 @@ const router = express.Router();
  *     summary: Get all users
  *     description: Retrieve a paginated list of users with optional search
  *     tags: [Users]
+ *     security:
+ *       - bearerAuth: []
  *     parameters:
  *       - in: query
  *         name: page
@@ -179,6 +181,8 @@ router.get('/', userController.getAllUsers);
  *     summary: Get a user by ID
  *     description: Retrieve detailed information about a specific user
  *     tags: [Users]
+ *     security:
+ *       - bearerAuth: []
  *     parameters:
  *       - in: path
  *         name: id
@@ -212,6 +216,8 @@ router.get('/:id', userController.getUserById);
  *     summary: Create a new user
  *     description: Register a new user account
  *     tags: [Users]
+ *     security:
+ *       - bearerAuth: []
  *     requestBody:
  *       required: true
  *       content:
@@ -245,7 +251,9 @@ router.post('/', userController.createUser);
  *   put:
  *     summary: Update a user
  *     description: Update user information
- *     tags: [Users]
+ *     tags: [Users]    
+ *     security:
+ *       - bearerAuth: []
  *     parameters:
  *       - in: path
  *         name: id
@@ -289,6 +297,8 @@ router.put('/:id', userController.updateUser);
  *     summary: Delete a user
  *     description: Delete a user account and all associated data
  *     tags: [Users]
+ *     security:
+ *       - bearerAuth: []
  *     parameters:
  *       - in: path
  *         name: id
@@ -325,6 +335,8 @@ router.delete('/:id', userController.deleteUser);
  *     summary: Get user statistics
  *     description: Retrieve detailed statistics for a specific user
  *     tags: [Users]
+ *     security:
+ *       - bearerAuth: []
  *     parameters:
  *       - in: path
  *         name: id
@@ -386,6 +398,8 @@ router.get('/profile', userController.getProfile);
  *     summary: Get user reviews
  *     description: Retrieve all reviews written by the current user
  *     tags: [Users]
+ *     security:
+ *       - bearerAuth: []
  *     responses:
  *       200:
  *         description: User reviews retrieved successfully

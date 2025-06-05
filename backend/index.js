@@ -2,6 +2,8 @@ const express = require('express');
 const { PrismaClient } = require('@prisma/client');
 const { specs, swaggerUi } = require('./config/swagger');
 const { authenticate } = require('./middleware/auth.js');
+const cors = require('cors');
+const config = require('./config/config');
 
 const bookRoutes = require('./routes/bookRoutes');
 const userRoutes = require('./routes/userRoutes');
@@ -20,6 +22,8 @@ const authenticateRoutes = require('./routes/auth.js');
 const app = express();
 const prisma = new PrismaClient();
 const PORT = process.env.PORT || 3000;
+
+app.use(cors(config.cors));
 
 app.use(express.json());
 

@@ -66,6 +66,8 @@ router.get('/', bookController.getAllBooks);
  *     summary: Get top rated books
  *     description: Retrieve a list of the highest rated books
  *     tags: [Books]
+ *     security:
+ *       - bearerAuth: []
  *     parameters:
  *       - in: query
  *         name: limit
@@ -98,6 +100,8 @@ router.get('/top-rated', bookController.getTopRatedBooks);
  *     summary: Get books by author
  *     description: Retrieve all books by a specific author
  *     tags: [Books]
+ *     security:
+ *       - bearerAuth: []
  *     parameters:
  *       - name: author
  *         in: path
@@ -131,6 +135,8 @@ router.get('/author/:author', bookController.getBooksByAuthor);
  *     summary: Create a new book
  *     description: Add a new book to the database
  *     tags: [Books]
+ *     security:
+ *       - bearerAuth: []
  *     requestBody:
  *       required: true
  *       content:
@@ -185,6 +191,8 @@ router.post('/', authenticate, validateBook, bookController.createBook);
  *     summary: Get a book by ID
  *     description: Retrieve detailed information about a specific book
  *     tags: [Books]
+ *  *  security:
+ *       - bearerAuth: []
  *     parameters:
  *       - $ref: '#/components/parameters/BookId'
  *     responses:
@@ -216,6 +224,8 @@ router.get('/:id', bookController.getBookById);
  *     summary: Update a book
  *     description: Update an existing book's information
  *     tags: [Books]
+ *     security:
+ *       - bearerAuth: []
  *     parameters:
  *       - $ref: '#/components/parameters/BookId'
  *     requestBody:
@@ -269,6 +279,8 @@ router.put('/:id', authenticate, validateBookUpdate, bookController.updateBook);
  *     summary: Delete a book
  *     description: Remove a book from the database (only if no related data exists)
  *     tags: [Books]
+ *     security:
+ *       - bearerAuth: []
  *     parameters:
  *       - $ref: '#/components/parameters/BookId'
  *     responses:
