@@ -35,7 +35,7 @@ const config = {
   },
 
   cors: {
-    origin: ['http://localhost:8081', 'http://localhost:3000', 'http://localhost:19006', '*'],
+    origin: true,
     methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH', 'OPTIONS'],
     allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With', 'Accept'],
     credentials: true,

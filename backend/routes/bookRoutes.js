@@ -18,8 +18,6 @@ const { authenticate } = require('../middleware/auth');
  *     summary: Get all books with filtering and search
  *     description: Retrieve a paginated list of books with optional search and filtering capabilities
  *     tags: [Books]
- *     security:
- *       - bearerAuth: []
  *     parameters:
  *       - $ref: '#/components/parameters/Search'
  *       - $ref: '#/components/parameters/MinRating'
