@@ -189,7 +189,7 @@ router.post('/', authenticate, validateBook, bookController.createBook);
  *     summary: Get a book by ID
  *     description: Retrieve detailed information about a specific book
  *     tags: [Books]
- *  *  security:
+ *     security:
  *       - bearerAuth: []
  *     parameters:
  *       - $ref: '#/components/parameters/BookId'
