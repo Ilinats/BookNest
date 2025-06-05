@@ -15,6 +15,8 @@ const libraryEntryController = require('../controllers/libraryEntryController');
  *   post:
  *     summary: Add a book to a library
  *     tags: [Library Entries]
+ *     security:
+ *       - bearerAuth: []
  *     requestBody:
  *       required: true
  *       content:
@@ -43,6 +45,8 @@ router.post('/', libraryEntryController.addBookToLibrary);
  *   get:
  *     summary: Get all entries in a library
  *     tags: [Library Entries]
+ *     security:
+ *       - bearerAuth: []
  *     parameters:
  *       - in: path
  *         name: libraryId
@@ -64,6 +68,8 @@ router.get('/library/:libraryId', libraryEntryController.getLibraryEntries);
  *   get:
  *     summary: Get a specific library entry
  *     tags: [Library Entries]
+ *     security:
+ *       - bearerAuth: []
  *     parameters:
  *       - in: path
  *         name: id
@@ -85,6 +91,8 @@ router.get('/:id', libraryEntryController.getLibraryEntry);
  *   delete:
  *     summary: Remove a book from a library
  *     tags: [Library Entries]
+ *     security:
+ *       - bearerAuth: []
  *     parameters:
  *       - in: path
  *         name: id

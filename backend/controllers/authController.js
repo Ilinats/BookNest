@@ -5,7 +5,6 @@ const { z } = require('zod');
 
 const prisma = new PrismaClient();
 
-// Validation schemas
 const registerSchema = z.object({
   username: z.string().min(3).max(50),
   email: z.string().email(),

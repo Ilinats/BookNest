@@ -15,6 +15,8 @@ const challengeEntryController = require('../controllers/challengeEntryControlle
  *   post:
  *     summary: Add a book to a reading challenge
  *     tags: [Challenge Entries]
+ *     security:
+ *       - bearerAuth: []
  *     requestBody:
  *       required: true
  *       content:
@@ -64,6 +66,8 @@ router.get('/challenge/:challengeId', challengeEntryController.getChallengeEntri
  *   get:
  *     summary: Get a specific challenge entry
  *     tags: [Challenge Entries]
+ *     security:
+ *       - bearerAuth: []
  *     parameters:
  *       - in: path
  *         name: id
@@ -85,6 +89,8 @@ router.get('/:id', challengeEntryController.getChallengeEntry);
  *   delete:
  *     summary: Remove a book from a challenge
  *     tags: [Challenge Entries]
+ *     security:
+ *       - bearerAuth: []
  *     parameters:
  *       - in: path
  *         name: id

@@ -15,6 +15,8 @@ const libraryController = require('../controllers/libraryController');
  *   post:
  *     summary: Create a new library
  *     tags: [Libraries]
+ *     security:
+ *       - bearerAuth: []
  *     requestBody:
  *       required: true
  *       content:
@@ -47,6 +49,8 @@ router.post('/', libraryController.createLibrary);
  *   get:
  *     summary: Get all libraries for a user
  *     tags: [Libraries]
+ *     security:
+ *       - bearerAuth: []
  *     parameters:
  *       - in: path
  *         name: userId
@@ -68,6 +72,8 @@ router.get('/user/:userId', libraryController.getUserLibraries);
  *   get:
  *     summary: Get a specific library
  *     tags: [Libraries]
+ *     security:
+ *       - bearerAuth: []
  *     parameters:
  *       - in: path
  *         name: id
@@ -89,6 +95,8 @@ router.get('/:id', libraryController.getLibrary);
  *   put:
  *     summary: Update a library
  *     tags: [Libraries]
+ *     security:
+ *       - bearerAuth: []
  *     parameters:
  *       - in: path
  *         name: id
@@ -122,6 +130,8 @@ router.put('/:id', libraryController.updateLibrary);
  *   delete:
  *     summary: Delete a library
  *     tags: [Libraries]
+ *     security:
+ *       - bearerAuth: []
  *     parameters:
  *       - in: path
  *         name: id

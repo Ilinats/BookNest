@@ -15,6 +15,8 @@ const readingChallengeController = require('../controllers/readingChallengeContr
  *   post:
  *     summary: Create a new reading challenge
  *     tags: [Reading Challenges]
+ *     security:
+ *       - bearerAuth: []
  *     requestBody:
  *       required: true
  *       content:
@@ -54,6 +56,8 @@ router.post('/', readingChallengeController.createChallenge);
  *   get:
  *     summary: Get all challenges for a user
  *     tags: [Reading Challenges]
+ *     security:
+ *       - bearerAuth: []
  *     parameters:
  *       - in: path
  *         name: userId
@@ -96,6 +100,8 @@ router.get('/:id', readingChallengeController.getChallenge);
  *   put:
  *     summary: Update a challenge
  *     tags: [Reading Challenges]
+ *     security:
+ *       - bearerAuth: []
  *     parameters:
  *       - in: path
  *         name: id
@@ -136,6 +142,8 @@ router.put('/:id', readingChallengeController.updateChallenge);
  *   delete:
  *     summary: Delete a challenge
  *     tags: [Reading Challenges]
+ *     security:
+ *       - bearerAuth: []
  *     parameters:
  *       - in: path
  *         name: id

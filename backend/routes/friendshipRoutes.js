@@ -15,6 +15,8 @@ const friendshipController = require('../controllers/friendshipController');
  *   post:
  *     summary: Create a new friendship
  *     tags: [Friendships]
+ *     security:
+ *       - bearerAuth: []
  *     requestBody:
  *       required: true
  *       content:
@@ -43,6 +45,8 @@ router.post('/', friendshipController.sendFriendRequest);
  *   get:
  *     summary: Get all friendships for a user
  *     tags: [Friendships]
+ *     security:
+ *       - bearerAuth: []
  *     parameters:
  *       - in: path
  *         name: userId
@@ -64,6 +68,8 @@ router.get('/user/:userId', friendshipController.getUserFriends);
  *   get:
  *     summary: Get a specific friendship
  *     tags: [Friendships]
+ *     security:
+ *       - bearerAuth: []
  *     parameters:
  *       - in: path
  *         name: id
@@ -85,6 +91,8 @@ router.get('/:id', friendshipController.getFriendship);
  *   delete:
  *     summary: Delete a friendship
  *     tags: [Friendships]
+ *     security:
+ *       - bearerAuth: []
  *     parameters:
  *       - in: path
  *         name: id

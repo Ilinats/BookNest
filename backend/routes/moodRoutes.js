@@ -15,6 +15,8 @@ const moodController = require('../controllers/moodController');
  *   post:
  *     summary: Create a new mood
  *     tags: [Moods]
+ *     security:
+ *       - bearerAuth: []
  *     requestBody:
  *       required: true
  *       content:
@@ -54,6 +56,8 @@ router.get('/', moodController.getAllMoods);
  *   get:
  *     summary: Get a specific mood
  *     tags: [Moods]
+ *     security:
+ *       - bearerAuth: []
  *     parameters:
  *       - in: path
  *         name: id
@@ -75,6 +79,8 @@ router.get('/:id', moodController.getMood);
  *   put:
  *     summary: Update a mood
  *     tags: [Moods]
+ *     security:
+ *       - bearerAuth: []
  *     parameters:
  *       - in: path
  *         name: id
@@ -105,6 +111,8 @@ router.put('/:id', moodController.updateMood);
  *   delete:
  *     summary: Delete a mood
  *     tags: [Moods]
+ *     security:
+ *       - bearerAuth: []
  *     parameters:
  *       - in: path
  *         name: id
