@@ -415,8 +415,8 @@ const options = {
     }
   },
   apis: [
-    path.join(__dirname, '../routes/*.js'),
-    path.join(__dirname, '../controllers/*.js'),
+    path.join(__dirname, '../routes/auth.js'),
+    path.join(__dirname, '../controllers/authController.js'),
     path.join(__dirname, '../index.js')
   ]
 };
