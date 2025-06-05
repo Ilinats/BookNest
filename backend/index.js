@@ -21,7 +21,7 @@ const authenticateRoutes = require('./routes/auth.js');
 
 const app = express();
 // app.options('*', cors()); // handle preflight requests
-// app.use(cors()); // Allow CORS
+app.use(cors()); // Allow CORS
 const prisma = new PrismaClient();
 const PORT = process.env.PORT || 3000;
 
