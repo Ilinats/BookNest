@@ -35,12 +35,13 @@ const config = {
   },
 
   cors: {
-    origin: true,
+    origin: ['http://localhost:8081', 'http://localhost:3000', 'http://localhost:19006', '*'],
     methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH', 'OPTIONS'],
     allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With', 'Accept'],
     credentials: true,
     preflightContinue: false,
-    optionsSuccessStatus: 204
+    optionsSuccessStatus: 204,
+    exposedHeaders: ['Content-Range', 'X-Content-Range']
   },
 };
 

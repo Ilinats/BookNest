@@ -23,7 +23,17 @@ const app = express();
 const prisma = new PrismaClient();
 const PORT = process.env.PORT || 3000;
 
-app.use(cors(config.cors));
+app.use(cors({
+  ...config.cors,
+  origin: function(origin, callback) {
+    const allowedOrigins = config.cors.origin;
+    if (!origin || allowedOrigins.indexOf(origin) !== -1) {
+      callback(null, true);
+    } else {
+      callback(new Error('Not allowed by CORS'));
+    }
+  }
+}));
 
 app.use(express.json());
 
