@@ -4,7 +4,7 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 // const API_URL = 'http://booknest-8vzt.onrender.com';
 const API_URL = 'http://localhost:3000';
 
-const api = axios.create({
+export const api = axios.create({
   baseURL: API_URL,
   headers: {
     'Content-Type': 'application/json',
@@ -48,18 +48,32 @@ export const auth = {
   logout: () => AsyncStorage.removeItem('userToken'),
 };
 
-// Book endpoints
+// Book endpoints - Fixed parameter names and validation
 export const books = {
-  search: (query, filters) => api.get('/api/books/search', { 
-    params: { 
-      search: query,
-      minPages: filters?.minPages || 0,
-      maxPages: filters?.maxPages || 1000,
-      minRating: filters?.minRating || 0,
-      maxRating: filters?.maxRating || 5
-    } 
+  search: (query, filters = {}) => {
+    // Validate and clean parameters
+    const params = {
+      search: query || '',  // Changed back to 'search' to match backend
+      minPages: Math.max(0, parseInt(filters.minPages) || 0),
+      maxPages: Math.min(10000, parseInt(filters.maxPages) || 1000),
+      minRating: Math.max(0, Math.min(5, parseFloat(filters.minRating) || 0)),
+      maxRating: Math.max(0, Math.min(5, parseFloat(filters.maxRating) || 5))
+    };
+    
+    // Remove empty/invalid parameters
+    Object.keys(params).forEach(key => {
+      if (params[key] === '' || params[key] === null || params[key] === undefined) {
+        delete params[key];
+      }
+    });
+    
+    return api.get('/api/books', { params });
+  },
+  
+  getTopRated: (limit = 10) => api.get('/api/books/top-rated', { 
+    params: { limit: Math.min(100, Math.max(1, parseInt(limit) || 10)) } 
   }),
-  getTopRated: (limit = 10) => api.get('/api/books/top-rated', { params: { limit } }),
+  
   getById: (id) => api.get(`/api/books/${id}`),
   addReview: (bookId, review) => api.post(`/api/books/${bookId}/reviews`, review),
   markAsRead: (bookId) => api.post(`/api/books/${bookId}/read`),
@@ -78,17 +92,23 @@ export const library = {
 
 // Challenges endpoints
 export const challenges = {
-  getCurrent: () => api.get('/api/challenges/current'),
-  getPast: () => api.get('/api/challenges/past'),
-  create: (challengeData) => api.post('/api/challenges', challengeData),
-  updateProgress: (challengeId, progress) => api.put(`/api/challenges/${challengeId}/progress`, progress),
+  getCurrent: () => api.get('/api/reading-challenges/current'),
+  getPast: () => api.get('/api/reading-challenges/past'),
+  create: (challengeData) => api.post('/api/reading-challenges', challengeData),
+  updateProgress: (challengeId, progress) => api.put(`/api/reading-challenges/${challengeId}/progress`, progress),
 };
 
-// User endpoints
+// User endpoints - Added error handling
 export const user = {
-  getProfile: () => api.get('/api/users/profile'),
+  getProfile: () => api.get('/api/users/profile').catch(error => {
+    console.error('Profile fetch error:', error);
+    throw error;
+  }),
   updateProfile: (profileData) => api.put('/api/users/profile', profileData),
-  getReviews: () => api.get('/api/users/reviews'),
+  getReviews: () => api.get('/api/users/reviews').catch(error => {
+    console.error('Reviews fetch error:', error);  
+    throw error;
+  }),
 };
 
-export default api; 
+export default api;

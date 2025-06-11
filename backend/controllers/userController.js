@@ -124,7 +124,7 @@ class UserController {
                 this.initializeService(req.prisma);
             }
 
-            const userId = req.user.id;
+            const userId = req.user.userId;
             const user = await this.userService.getUserById(userId);
             
             res.status(200).json({
