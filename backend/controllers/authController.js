@@ -2,6 +2,7 @@ const bcrypt = require('bcrypt');
 const { PrismaClient } = require('@prisma/client');
 const { generateToken } = require('../utils/jwt');
 const { z } = require('zod');
+const jwt = require('jsonwebtoken');
 
 const prisma = new PrismaClient();
 
@@ -87,8 +88,12 @@ const login = async (req, res) => {
       return res.status(401).json({ error: 'Invalid credentials' });
     }
 
+    console.log('User found:', { id: user.id, email: user.email });
+    
     // Generate token
     const token = generateToken(user.id);
+    console.log('Generated token:', token);
+    console.log('Decoded token:', jwt.verify(token, process.env.JWT_SECRET));
 
     res.json({
       message: 'Login successful',
@@ -100,6 +105,7 @@ const login = async (req, res) => {
       },
     });
   } catch (error) {
+    console.error('Login error:', error);
     if (error instanceof z.ZodError) {
       return res.status(400).json({ error: error.errors });
     }
