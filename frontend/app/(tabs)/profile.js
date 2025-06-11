@@ -9,6 +9,9 @@ import {
   Image,
   Alert,
   ActivityIndicator,
+  TextInput,
+  Modal,
+  Platform,
 } from 'react-native';
 import { useRouter } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
@@ -20,9 +23,13 @@ export default function ProfileScreen() {
   const router = useRouter();
   const { user: currentUser, logout } = useApp();
   const [activeTab, setActiveTab] = useState('stats');
+  const [isEditModalVisible, setIsEditModalVisible] = useState(false);
+  const [editedUsername, setEditedUsername] = useState('');
+  const [editedEmail, setEditedEmail] = useState('');
 
   const { data: profile, loading: profileLoading, error: profileError, execute: fetchProfile } = useApi(user.getProfile);
   const { data: reviewsData, loading: reviewsLoading, error: reviewsError, execute: fetchReviews } = useApi(user.getReviews);
+  const { execute: updateProfile, loading: updateLoading } = useApi(user.updateProfile);
 
   useEffect(() => {
     if (currentUser) {
@@ -30,6 +37,13 @@ export default function ProfileScreen() {
       fetchReviews();
     }
   }, [currentUser]);
+
+  useEffect(() => {
+    if (profile?.data) {
+      setEditedUsername(profile.data.username || '');
+      setEditedEmail(profile.data.email || '');
+    }
+  }, [profile]);
 
   useEffect(() => {
     if (profileError || reviewsError) {
@@ -54,28 +68,63 @@ export default function ProfileScreen() {
   }, [profileError, reviewsError]);
 
   const handleLogout = async () => {
-    Alert.alert(
-      'Logout',
-      'Are you sure you want to logout?',
-      [
-        {
-          text: 'Cancel',
-          style: 'cancel',
-        },
-        {
-          text: 'Logout',
-          style: 'destructive',
-          onPress: async () => {
-            try {
-              await logout();
-              router.replace('/auth/login');
-            } catch (error) {
-              Alert.alert('Error', 'Failed to logout. Please try again.');
-            }
-          },
-        },
-      ]
-    );
+    const confirmLogout = Platform.OS === 'web' 
+      ? window.confirm('Are you sure you want to logout?')
+      : new Promise((resolve) => {
+          Alert.alert(
+            'Logout',
+            'Are you sure you want to logout?',
+            [
+              {
+                text: 'Cancel',
+                style: 'cancel',
+                onPress: () => resolve(false)
+              },
+              {
+                text: 'Logout',
+                style: 'destructive',
+                onPress: () => resolve(true)
+              }
+            ]
+          );
+        });
+
+    if (confirmLogout) {
+      try {
+        await logout();
+        router.replace('/auth/login');
+      } catch (error) {
+        console.error('Logout error:', error);
+        if (Platform.OS === 'web') {
+          alert('Failed to logout. Please try again.');
+        } else {
+          Alert.alert('Error', 'Failed to logout. Please try again.');
+        }
+      }
+    }
+  };
+
+  const handleEditProfile = async () => {
+    try {
+      await updateProfile({
+        username: editedUsername,
+        email: editedEmail
+      });
+      setIsEditModalVisible(false);
+      fetchProfile(); // Refresh profile data
+      if (Platform.OS === 'web') {
+        alert('Profile updated successfully');
+      } else {
+        Alert.alert('Success', 'Profile updated successfully');
+      }
+    } catch (error) {
+      console.error('Update profile error:', error);
+      if (Platform.OS === 'web') {
+        alert(error.response?.data?.message || 'Failed to update profile');
+      } else {
+        Alert.alert('Error', error.response?.data?.message || 'Failed to update profile');
+      }
+    }
   };
 
   if (!currentUser) {
@@ -122,7 +171,9 @@ export default function ProfileScreen() {
               <Text style={styles.email}>{profile?.data?.email}</Text>
             </View>
           </View>
-          <TouchableOpacity style={styles.editButton}>
+          <TouchableOpacity 
+            style={styles.editButton}
+            onPress={() => setIsEditModalVisible(true)}>
             <Ionicons name="pencil" size={20} color="#007AFF" />
           </TouchableOpacity>
         </View>
@@ -156,7 +207,7 @@ export default function ProfileScreen() {
             <View style={styles.statCard}>
               <Ionicons name="star" size={24} color="#FFD700" />
               <Text style={styles.statValue}>
-                {profile?.data?.reviews?.reduce((acc, review) => acc + review.rating, 0) / (profile?.data?.reviews?.length || 1) || 0}
+                {(profile?.data?.reviews?.reduce((acc, review) => acc + review.rating, 0) / (profile?.data?.reviews?.length || 1)).toFixed(2)}
               </Text>
               <Text style={styles.statLabel}>Avg. Rating</Text>
             </View>
@@ -200,6 +251,51 @@ export default function ProfileScreen() {
           <Text style={styles.logoutButtonText}>Logout</Text>
         </TouchableOpacity>
       </ScrollView>
+
+      <Modal
+        visible={isEditModalVisible}
+        transparent={true}
+        animationType="slide"
+        onRequestClose={() => setIsEditModalVisible(false)}>
+        <View style={styles.modalOverlay}>
+          <View style={styles.modalContent}>
+            <View style={styles.modalHeader}>
+              <Text style={styles.modalTitle}>Edit Profile</Text>
+              <TouchableOpacity
+                style={styles.closeButton}
+                onPress={() => setIsEditModalVisible(false)}>
+                <Ionicons name="close" size={24} color="#666" />
+              </TouchableOpacity>
+            </View>
+
+            <TextInput
+              style={styles.input}
+              placeholder="Username"
+              value={editedUsername}
+              onChangeText={setEditedUsername}
+            />
+            <TextInput
+              style={styles.input}
+              placeholder="Email"
+              value={editedEmail}
+              onChangeText={setEditedEmail}
+              keyboardType="email-address"
+              autoCapitalize="none"
+            />
+
+            <TouchableOpacity
+              style={[styles.saveButton, updateLoading && styles.saveButtonDisabled]}
+              onPress={handleEditProfile}
+              disabled={updateLoading}>
+              {updateLoading ? (
+                <ActivityIndicator color="#fff" />
+              ) : (
+                <Text style={styles.saveButtonText}>Save Changes</Text>
+              )}
+            </TouchableOpacity>
+          </View>
+        </View>
+      </Modal>
     </SafeAreaView>
   );
 }
@@ -364,6 +460,55 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   logoutButtonText: {
+    color: '#fff',
+    fontSize: 16,
+    fontWeight: 'bold',
+  },
+  modalOverlay: {
+    flex: 1,
+    backgroundColor: 'rgba(0, 0, 0, 0.5)',
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  modalContent: {
+    backgroundColor: '#fff',
+    borderRadius: 12,
+    padding: 20,
+    width: '90%',
+    maxWidth: 400,
+  },
+  modalHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: 20,
+  },
+  modalTitle: {
+    fontSize: 20,
+    fontWeight: 'bold',
+    color: '#333',
+  },
+  closeButton: {
+    padding: 4,
+  },
+  input: {
+    borderWidth: 1,
+    borderColor: '#ddd',
+    borderRadius: 8,
+    padding: 12,
+    marginBottom: 16,
+    fontSize: 16,
+  },
+  saveButton: {
+    backgroundColor: '#007AFF',
+    borderRadius: 8,
+    padding: 16,
+    alignItems: 'center',
+  },
+  saveButtonDisabled: {
+    backgroundColor: '#ccc',
+  },
+  saveButtonText: {
     color: '#fff',
     fontSize: 16,
     fontWeight: 'bold',

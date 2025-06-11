@@ -13,6 +13,7 @@ export default function TabLayout() {
           paddingBottom: 5,
           paddingTop: 5,
         },
+        headerShown: false,
       }}>
       <Tabs.Screen
         name="index"

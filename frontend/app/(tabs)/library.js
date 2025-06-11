@@ -10,6 +10,7 @@ import {
   TextInput,
   Modal,
   ActivityIndicator,
+  Platform,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { useRouter } from 'expo-router';
@@ -29,32 +30,18 @@ export default function LibraryScreen() {
   const { execute: deleteLibrary } = useApi(library.deleteLibrary);
 
   useEffect(() => {
-    if (user?.data.id) {
+    if (user?.data?.id) {
       fetchLibraries(user.data.id);
     }
-  }, [user?.data.id]);
+  }, [user?.data?.id]);
 
   const handleCreateLibrary = async () => {
-    console.log('=== DEBUG: Create Library Function Called ===');
-    console.log('Button pressed at:', new Date().toISOString());
-    
-    // Debug: Check if function is even called
-    Alert.alert('Debug', 'Function called!');
-    
-    console.log('newLibraryName:', newLibraryName);
-    console.log('libraryType:', libraryType);
-    console.log('user object:', user);
-    console.log('user?.userId:', user?.data.id);
-    console.log('parseInt(user.userId):', parseInt(user.data.id));
-
     if (!newLibraryName.trim()) {
-      console.log('ERROR: Empty library name');
       Alert.alert('Error', 'Please enter a library name');
       return;
     }
 
-    if (!user?.data.id) {
-      console.log('ERROR: No user ID found');
+    if (!user?.data?.id) {
       Alert.alert('Error', 'You must be logged in to create a library');
       return;
     }
@@ -64,61 +51,59 @@ export default function LibraryScreen() {
       type: libraryType,
       userId: parseInt(user.data.id)
     };
-    
-    console.log('About to send payload:', payload);
 
     try {
-      console.log('Calling createLibrary function...');
       const result = await createLibrary(payload);
-      console.log('Create library success:', result);
-      
       setNewLibraryName('');
       setLibraryType('CUSTOM');
       setIsModalVisible(false);
-      
-      console.log('Refreshing libraries...');
-      await fetchLibraries(user.id);
-      
+      await fetchLibraries(user.data.id);
       Alert.alert('Success', 'Library created successfully!');
     } catch (error) {
-      console.error('=== CREATE LIBRARY ERROR ===');
-      console.error('Error object:', error);
-      console.error('Error message:', error.message);
-      console.error('Error response:', error.response);
-      console.error('Error response data:', error.response?.data);
-      console.error('Error response status:', error.response?.status);
-      
       Alert.alert(
         'Error',
-        `Failed to create library: ${error.response?.data?.message || error.message}`,
-        [{ text: 'OK', style: 'default' }]
+        `Failed to create library: ${error.response?.data?.message || error.message}`
       );
     }
   };
 
   const handleDeleteLibrary = async (libraryId) => {
-    Alert.alert(
-      'Delete Library',
-      'Are you sure you want to delete this library? This action cannot be undone.',
-      [
-        {
-          text: 'Cancel',
-          style: 'cancel',
-        },
-        {
-          text: 'Delete',
-          style: 'destructive',
-          onPress: async () => {
-            try {
-              await deleteLibrary(libraryId);
-              fetchLibraries(user.id);
-            } catch (error) {
-              // Error is handled by useApi hook
-            }
-          },
-        },
-      ]
-    );
+    const confirmDelete = Platform.OS === 'web' 
+      ? window.confirm('Are you sure you want to delete this library? This action cannot be undone.')
+      : new Promise((resolve) => {
+          Alert.alert(
+            'Delete Library',
+            'Are you sure you want to delete this library? This action cannot be undone.',
+            [
+              {
+                text: 'Cancel',
+                style: 'cancel',
+                onPress: () => resolve(false)
+              },
+              {
+                text: 'Delete',
+                style: 'destructive',
+                onPress: () => resolve(true)
+              }
+            ]
+          );
+        });
+
+    if (confirmDelete) {
+      try {
+        await deleteLibrary(libraryId);
+        if (user?.data?.id) {
+          await fetchLibraries(user.data.id);
+        }
+      } catch (error) {
+        console.error('Delete library error:', error);
+        if (Platform.OS === 'web') {
+          alert('Failed to delete library. Please try again.');
+        } else {
+          Alert.alert('Error', 'Failed to delete library. Please try again.');
+        }
+      }
+    }
   };
 
   const renderLibrary = ({ item }) => (
@@ -199,7 +184,7 @@ export default function LibraryScreen() {
         keyExtractor={(item) => item.id.toString()}
         contentContainerStyle={styles.libraryList}
         refreshing={loading}
-        onRefresh={() => fetchLibraries(user.id)}
+        onRefresh={() => fetchLibraries(user.data.data.id)}
         ListEmptyComponent={
           <View style={styles.emptyContainer}>
             <Ionicons name="library-outline" size={48} color="#666" />

@@ -12,6 +12,9 @@ export function useApi(apiFunction) {
         setLoading(true);
         setError(null);
         const response = await apiFunction(...args);
+        if (response.status === 204) {
+          return null;
+        }
         setData(response.data);
         return response.data;
       } catch (err) {

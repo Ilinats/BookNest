@@ -52,12 +52,23 @@ export function AppProvider({ children }) {
     try {
       const token = await AsyncStorage.getItem('userToken');
       if (token) {
-        const response = await user.getProfile();
-        dispatch({ type: 'SET_USER', payload: response.data });
+        try {
+          const response = await user.getProfile();
+          dispatch({ type: 'SET_USER', payload: response.data });
+        } catch (error) {
+          // If the token is invalid, remove it and log out
+          if (error.response?.status === 401) {
+            await AsyncStorage.removeItem('userToken');
+            dispatch({ type: 'LOGOUT' });
+          } else {
+            dispatch({ type: 'SET_ERROR', payload: error.message });
+          }
+        }
       } else {
         dispatch({ type: 'LOGOUT' });
       }
     } catch (error) {
+      console.error('Auth check error:', error);
       dispatch({ type: 'SET_ERROR', payload: error.message });
     }
   };

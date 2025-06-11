@@ -19,7 +19,14 @@ export default function RootLayout() {
               },
               headerShadowVisible: false,
             }}
-          />
+          >
+            <Stack.Screen
+              name="library/[id]"
+              options={{
+                headerShown: false
+              }}
+            />
+          </Stack>
         </ProtectedRoute>
       </AppProvider>
     </ErrorBoundary>

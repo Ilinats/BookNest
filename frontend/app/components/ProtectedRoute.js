@@ -11,8 +11,11 @@ export default function ProtectedRoute({ children }) {
   React.useEffect(() => {
     if (!loading) {
       const inAuthGroup = segments[0] === 'auth';
+      const inTabsGroup = segments[0] === '(tabs)';
+      
       if (!isAuthenticated && !inAuthGroup) {
-        // Redirect to login if not authenticated
+        // Only redirect to login if we're not already in the auth group
+        // and we're not in the loading state
         router.replace('/auth/login');
       } else if (isAuthenticated && inAuthGroup) {
         // Redirect to home if authenticated and trying to access auth screens
@@ -21,6 +24,7 @@ export default function ProtectedRoute({ children }) {
     }
   }, [isAuthenticated, loading, segments]);
 
+  // Show loading indicator only during initial auth check
   if (loading) {
     return (
       <View style={styles.loadingContainer}>

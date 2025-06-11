@@ -1,7 +1,7 @@
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { useAuth } from '../hooks/useAuth';
 import { useState, useEffect } from 'react';
-import { Alert, View, Text, TouchableOpacity, ActivityIndicator, ScrollView, RefreshControl, Image, StyleSheet } from 'react-native';
+import { Alert, View, Text, TouchableOpacity, ActivityIndicator, ScrollView, RefreshControl, Image, StyleSheet, Platform } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { useApi } from '../hooks/useApi';
 import { library } from '../services/api';
@@ -44,46 +44,51 @@ export default function LibraryDetails() {
   };
 
   const handleRemoveBook = async (entryId) => {
-    Alert.alert(
-      'Remove Book',
-      'Are you sure you want to remove this book from your library?',
-      [
-        {
-          text: 'Cancel',
-          style: 'cancel',
-          onPress: () => {
-            // Focus returns to the remove button
-            const removeButton = document.querySelector(`[data-entry-id="${entryId}"]`);
-            if (removeButton) {
-              removeButton.focus();
-            }
-          }
-        },
-        {
-          text: 'Remove',
-          style: 'destructive',
-          onPress: async () => {
-            try {
-              await removeBook(entryId);
-              fetchEntries(id);
-              Alert.alert('Success', 'Book removed from library');
-            } catch (error) {
-              Alert.alert('Error', 'Failed to remove book from library');
-            }
-          },
-        },
-      ],
-      {
-        cancelable: true,
-        onDismiss: () => {
-          // Focus returns to the remove button when dialog is dismissed
-          const removeButton = document.querySelector(`[data-entry-id="${entryId}"]`);
-          if (removeButton) {
-            removeButton.focus();
-          }
+    console.log('Attempting to remove book with entry ID:', entryId);
+    
+    const isConfirmed = Platform.OS === 'web' 
+      ? window.confirm('Are you sure you want to remove this book from your library?')
+      : new Promise((resolve) => {
+          Alert.alert(
+            'Remove Book',
+            'Are you sure you want to remove this book from your library?',
+            [
+              {
+                text: 'Cancel',
+                style: 'cancel',
+                onPress: () => resolve(false)
+              },
+              {
+                text: 'Remove',
+                style: 'destructive',
+                onPress: () => resolve(true)
+              }
+            ],
+            { cancelable: true }
+          );
+        });
+
+    if (isConfirmed) {
+      try {
+        console.log('Removing book with entry ID:', entryId);
+        await removeBook(entryId);
+        // Refresh the entries list
+        await fetchEntries(id);
+        if (Platform.OS === 'web') {
+          alert('Book removed from library');
+        } else {
+          Alert.alert('Success', 'Book removed from library');
+        }
+      } catch (error) {
+        console.error('Error removing book:', error);
+        const errorMessage = error.response?.data?.message || 'Failed to remove book from library';
+        if (Platform.OS === 'web') {
+          alert(errorMessage);
+        } else {
+          Alert.alert('Error', errorMessage);
         }
       }
-    );
+    }
   };
 
   if (userLoading) {
@@ -135,7 +140,7 @@ export default function LibraryDetails() {
   return (
     <View style={styles.container}>
       <View style={styles.header}>
-        <TouchableOpacity onPress={() => router.push('/')} style={styles.backButton}>
+        <TouchableOpacity onPress={() => router.push('/library')} style={styles.backButton}>
           <Ionicons name="arrow-back" size={24} color="#000" />
         </TouchableOpacity>
         <Text style={styles.title}>{libraryData?.name}</Text>
@@ -162,7 +167,10 @@ export default function LibraryDetails() {
               onPress={() => router.push(`/book/${entry.book.id}`)}
             >
               <Image
-                source={{ uri: entry.book.coverUrl || entry.book.coverImage || 'https://via.placeholder.com/80x120' }}
+                source={{ 
+                  uri: entry.book.coverUrl || entry.book.coverImage || 
+                  `https://ui-avatars.com/api/?name=${encodeURIComponent(entry.book.title)}&background=random&color=fff&size=200`
+                }}
                 style={styles.bookCover}
                 resizeMode="cover"
               />
@@ -182,8 +190,10 @@ export default function LibraryDetails() {
               </View>
               <TouchableOpacity
                 style={styles.removeButton}
-                onPress={() => handleRemoveBook(entry.id)}
-                data-entry-id={entry.id}
+                onPress={() => {
+                  console.log('Remove button pressed for entry:', entry.id);
+                  handleRemoveBook(entry.id);
+                }}
                 accessibilityLabel={`Remove ${entry.book.title} from library`}
                 accessibilityHint="Double tap to remove this book from your library"
               >
