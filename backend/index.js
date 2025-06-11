@@ -56,9 +56,6 @@ app.use((req, res, next) => {
   }
 });
 
-const prisma = new PrismaClient();
-const PORT = process.env.PORT || 3000;
-
 const prisma = new PrismaClient({
   log: ['query', 'info', 'warn', 'error'],
   datasources: {
