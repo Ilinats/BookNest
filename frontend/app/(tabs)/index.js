@@ -10,7 +10,7 @@ export default function HomeScreen() {
   const router = useRouter();
   
   const { data: topBooksResponse, loading: topBooksLoading, error: topBooksError, execute: fetchTopBooks } = useApi(
-    () => books.getTopRated(5)
+    () => books.getTopRated(13)
   );
   
   const { data: currentChallenges, loading: challengesLoading, error: challengesError, execute: fetchChallenges } = useApi(

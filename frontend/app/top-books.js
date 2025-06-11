@@ -1,12 +1,13 @@
-import React from 'react';
+import React, { useEffect } from 'react';
 import {
   View,
   Text,
   StyleSheet,
-  FlatList,
+  ScrollView,
   Image,
   TouchableOpacity,
   SafeAreaView,
+  ActivityIndicator,
 } from 'react-native';
 import { useRouter } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
@@ -16,29 +17,32 @@ import LoadingScreen from './components/LoadingScreen';
 
 export default function TopBooksScreen() {
   const router = useRouter();
-  const { data: topBooks, loading, error, execute: fetchBooks } = useApi(books.getTopRated, { limit: 50 });
-
-  const renderBook = ({ item }) => (
-    <TouchableOpacity
-      style={styles.bookCard}
-      onPress={() => router.push(`/book/${item.id}`)}>
-      <Image
-        source={{ uri: item.coverImage }}
-        style={styles.bookCover}
-        resizeMode="cover"
-      />
-      <View style={styles.bookInfo}>
-        <Text style={styles.bookTitle}>{item.title}</Text>
-        <Text style={styles.bookAuthor}>{item.author}</Text>
-        <View style={styles.ratingContainer}>
-          <Ionicons name="star" size={16} color="#FFD700" />
-          <Text style={styles.rating}>{item.rating.toFixed(1)}</Text>
-          <Text style={styles.reviewCount}>({item._count.reviews} reviews)</Text>
-        </View>
-      </View>
-      <Ionicons name="chevron-forward" size={24} color="#666" />
-    </TouchableOpacity>
+  // Fix: Call the API function correctly
+  const { data: topBooksResponse, loading, error, execute: fetchBooks } = useApi(
+    () => books.getTopRated(50)
   );
+
+  // Fix: Handle the response structure like in HomeScreen
+  const topBooks = Array.isArray(topBooksResponse) 
+    ? topBooksResponse 
+    : topBooksResponse?.books || topBooksResponse?.data || [];
+
+  // Fix: Add useEffect to fetch data on component mount
+  useEffect(() => {
+    fetchBooks();
+  }, []);
+
+  const getBookCoverUrl = (book) => {
+    return book.coverUrl || book.coverImage || book.cover || null;
+  };
+
+  const getBookRating = (book) => {
+    return book.averageRating || book.rating || book.average_rating || 0;
+  };
+
+  const getReviewCount = (book) => {
+    return book._count?.reviews || book.reviewCount || book.reviews_count || 0;
+  };
 
   if (loading) {
     return <LoadingScreen message="Loading top books..." />;
@@ -63,27 +67,68 @@ export default function TopBooksScreen() {
       <View style={styles.header}>
         <TouchableOpacity
           style={styles.backButton}
-          onPress={() => router.back()}>
+          onPress={() => router.push('/(tabs)/')}>
           <Ionicons name="arrow-back" size={24} color="#333" />
         </TouchableOpacity>
         <Text style={styles.title}>Top Rated Books</Text>
         <View style={styles.placeholder} />
       </View>
 
-      <FlatList
-        data={topBooks}
-        renderItem={renderBook}
-        keyExtractor={(item) => item.id}
-        contentContainerStyle={styles.bookList}
-        refreshing={loading}
-        onRefresh={() => fetchBooks()}
-        ListEmptyComponent={
-          <View style={styles.emptyContainer}>
-            <Ionicons name="book-outline" size={48} color="#666" />
-            <Text style={styles.emptyText}>No books found</Text>
-          </View>
-        }
-      />
+      <ScrollView 
+        style={styles.content}
+        showsVerticalScrollIndicator={false}
+      >
+        <View style={styles.booksContainer}>
+          {Array.isArray(topBooks) && topBooks.length > 0 ? (
+            topBooks.map((book) => {
+              const coverUrl = getBookCoverUrl(book);
+              const rating = getBookRating(book);
+              const reviewCount = getReviewCount(book);
+              
+              return (
+                <TouchableOpacity
+                  key={book.id}
+                  style={styles.bookCard}
+                  onPress={() => router.push(`/book/${book.id}`)}>
+                  {coverUrl ? (
+                    <Image
+                      source={{ uri: coverUrl }}
+                      style={styles.bookCover}
+                      resizeMode="cover"
+                      onError={(e) => {
+                        console.log('Image failed to load:', coverUrl);
+                      }}
+                    />
+                  ) : (
+                    <View style={[styles.bookCover, styles.coverPlaceholder]}>
+                      <Ionicons name="book" size={40} color="#666" />
+                    </View>
+                  )}
+                  <Text style={styles.bookTitle} numberOfLines={2}>
+                    {book.title}
+                  </Text>
+                  <Text style={styles.bookAuthor} numberOfLines={1}>
+                    {book.author}
+                  </Text>
+                  <View style={styles.ratingContainer}>
+                    <Ionicons name="star" size={16} color="#FFD700" />
+                    <Text style={styles.rating}>
+                      {rating > 0 ? rating.toFixed(1) : 'N/A'}
+                    </Text>
+                    {reviewCount > 0 && (
+                      <Text style={styles.reviewCount}>({reviewCount})</Text>
+                    )}
+                  </View>
+                </TouchableOpacity>
+              );
+            })
+          ) : (
+            <View style={styles.noBooksContainer}>
+              <Text style={styles.noBooksText}>No top books available</Text>
+            </View>
+          )}
+        </View>
+      </ScrollView>
     </SafeAreaView>
   );
 }
@@ -112,16 +157,21 @@ const styles = StyleSheet.create({
   placeholder: {
     width: 40,
   },
-  bookList: {
-    padding: 16,
+  content: {
+    flex: 1,
+  },
+  booksContainer: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    padding: 8,
+    justifyContent: 'space-between',
   },
   bookCard: {
-    flexDirection: 'row',
-    alignItems: 'center',
+    width: '31%',
+    marginBottom: 16,
     backgroundColor: '#f8f9fa',
     borderRadius: 12,
-    padding: 12,
-    marginBottom: 12,
+    padding: 4,
     shadowColor: '#000',
     shadowOffset: {
       width: 0,
@@ -132,39 +182,42 @@ const styles = StyleSheet.create({
     elevation: 3,
   },
   bookCover: {
-    width: 60,
-    height: 90,
-    borderRadius: 8,
-  },
-  bookInfo: {
-    flex: 1,
-    marginLeft: 12,
-  },
-  bookTitle: {
-    fontSize: 16,
-    fontWeight: 'bold',
-    color: '#333',
+    width: '100%',
+    aspectRatio: 2/3,
+    borderRadius: 4,
     marginBottom: 4,
   },
+  coverPlaceholder: {
+    backgroundColor: '#f0f0f0',
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  bookTitle: {
+    fontSize: 11,
+    fontWeight: '600',
+    color: '#333',
+    marginBottom: 2,
+    lineHeight: 14,
+  },
   bookAuthor: {
-    fontSize: 14,
+    fontSize: 9,
     color: '#666',
-    marginBottom: 8,
+    marginBottom: 2,
   },
   ratingContainer: {
     flexDirection: 'row',
     alignItems: 'center',
   },
   rating: {
-    fontSize: 14,
-    fontWeight: 'bold',
+    fontSize: 9,
     color: '#333',
-    marginLeft: 4,
+    marginLeft: 2,
+    fontWeight: '500',
   },
   reviewCount: {
-    fontSize: 12,
-    color: '#666',
-    marginLeft: 4,
+    fontSize: 8,
+    color: '#888',
+    marginLeft: 2,
   },
   errorContainer: {
     flex: 1,
@@ -190,15 +243,15 @@ const styles = StyleSheet.create({
     fontSize: 16,
     fontWeight: 'bold',
   },
-  emptyContainer: {
-    flex: 1,
-    justifyContent: 'center',
+  noBooksContainer: {
+    width: '100%',
+    paddingVertical: 40,
     alignItems: 'center',
-    paddingVertical: 32,
   },
-  emptyText: {
+  noBooksText: {
     fontSize: 16,
     color: '#666',
-    marginTop: 12,
+    textAlign: 'center',
+    fontStyle: 'italic',
   },
-}); 
+});
