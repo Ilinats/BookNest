@@ -41,15 +41,35 @@ app.use((req, res, next) => {
 //   allowedHeaders: ['Content-Type', 'Authorization'],
 //   preflightContinue: true
 // }));
-const prisma = new PrismaClient();
-const PORT = process.env.PORT || 3000;
 
-// app.use((req, res, next) => {
-//   res.header('Access-Control-Allow-Origin', '*'); // Allow all origins
-//   res.header('Access-Control-Allow-Methods', 'GET,PUT,POST,DELETE,OPTIONS');
-//   res.header('Access-Control-Allow-Headers', 'Content-Type, Authorization');
-//   next();
-// });
+const prisma = new PrismaClient({
+  log: ['query', 'info', 'warn', 'error'],
+  datasources: {
+    db: {
+      url: process.env.DATABASE_URL
+    }
+  },
+  __internal: {
+    engine: {
+      connectionTimeout: 10000, // 10 seconds
+      retryAttempts: 5, // Number of retry attempts
+      retryDelay: 1000, // Delay between retries in milliseconds
+    }
+  }
+});
+
+// Test database connection
+async function testConnection() {
+  try {
+    await prisma.$connect();
+    console.log('Successfully connected to the database');
+  } catch (error) {
+    console.error('Failed to connect to the database:', error);
+    process.exit(1);
+  }
+}
+
+testConnection();
 
 app.use(express.json());
 
@@ -132,6 +152,8 @@ app.use('/api/challenge-entries', authenticate, challengeEntryRoutes);
 app.use('/api/reviews', authenticate, reviewRoutes);
 
 app.use(errorHandler);
+
+const PORT = process.env.PORT || 3000;
 
 app.listen(PORT, () => {
     console.log(`Server is running on http://localhost:${PORT}`);

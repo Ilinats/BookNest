@@ -51,6 +51,7 @@ class UserService {
     }
 
     async getUserById(id) {
+        console.log('getUserById - id:', id);
         const user = await this.prisma.user.findUnique({
             where: { id: parseInt(id) },
             select: {
@@ -72,7 +73,9 @@ class UserService {
                             }
                         }
                     },
-                    orderBy: { createdAt: 'desc' },
+                    orderBy: {
+                        createdAt: 'desc'
+                    },
                     take: 5
                 },
                 libraries: {
@@ -81,18 +84,24 @@ class UserService {
                         name: true,
                         type: true,
                         _count: {
-                            select: { entries: true }
+                            select: {
+                                entries: true
+                            }
                         }
                     }
                 },
                 challenges: {
                     select: {
                         id: true,
-                        year: true,
+                        name: true,
+                        startDate: true,
+                        endDate: true,
                         goal: true,
                         completed: true
                     },
-                    orderBy: { year: 'desc' }
+                    orderBy: {
+                        startDate: 'desc'
+                    }
                 },
                 _count: {
                     select: {
@@ -133,21 +142,33 @@ class UserService {
         const saltRounds = 10;
         const hashedPassword = await bcrypt.hash(password, saltRounds);
 
-        const user = await this.prisma.user.create({
-            data: {
-                username,
-                email,
-                password: hashedPassword
-            },
-            select: {
-                id: true,
-                username: true,
-                email: true,
-                createdAt: true
-            }
-        });
+        // Create user and Read folder in a transaction
+        return await this.prisma.$transaction(async (prisma) => {
+            const newUser = await prisma.user.create({
+                data: {
+                    username,
+                    email,
+                    password: hashedPassword
+                },
+                select: {
+                    id: true,
+                    username: true,
+                    email: true,
+                    createdAt: true
+                }
+            });
 
-        return user;
+            // Create Read folder for the user
+            await prisma.library.create({
+                data: {
+                    name: 'Read',
+                    type: 'READ',
+                    userId: newUser.id
+                }
+            });
+
+            return newUser;
+        });
     }
 
     async updateUser(id, userData) {

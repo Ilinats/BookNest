@@ -9,6 +9,9 @@ import {
   Alert,
   Modal,
   FlatList,
+  TouchableOpacity,
+  ActivityIndicator,
+  TextInput,
 } from 'react-native';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
@@ -24,37 +27,69 @@ export default function BookDetailsScreen() {
   const router = useRouter();
   const { user } = useApp();
   const [isFolderModalVisible, setIsFolderModalVisible] = useState(false);
-  const [selectedFolder, setSelectedFolder] = useState(null);
+  const [newLibraryName, setNewLibraryName] = useState('');
+  const [libraryType, setLibraryType] = useState('CUSTOM');
 
-  const { data: book, loading: bookLoading, error: bookError, execute: fetchBook } = useApi(books.getById);
-  const { data: folders, loading: foldersLoading, error: foldersError, execute: fetchFolders } = useApi(library.getFolders);
-  const { data: reviews, loading: reviewsLoading, error: reviewsError, execute: fetchReviews } = useApi(books.getReviews);
-  const { execute: addBookToFolder, loading: addingToFolder } = useApi(library.addBookToFolder);
-  const { execute: markAsRead, loading: markingAsRead } = useApi(books.markAsRead);
+  const { data: book, loading: bookLoading, error: bookError, execute: fetchBook } = useApi(
+    () => books.getById(id)
+  );
+  const { data: libraries, loading: librariesLoading, error: librariesError, execute: fetchLibraries } = useApi(
+    () => user?.data?.id ? library.getUserLibraries(user.data.id) : Promise.resolve([])
+  );
+  const { execute: createLibrary, loading: creatingLibrary } = useApi(library.createLibrary);
+  const { execute: addBookToLibrary, loading: addingToLibrary } = useApi(library.addBookToLibrary);
 
   useEffect(() => {
-    fetchBook(id);
-    fetchFolders();
-    fetchReviews(id);
-  }, [id]);
+    fetchBook();
+    if (user?.data?.id) {
+      fetchLibraries();
+    }
+  }, [id, user?.data?.id]);
 
-  const handleAddToFolder = async (folderId) => {
+  const handleCreateLibrary = async () => {
+    if (!newLibraryName.trim()) {
+      Alert.alert('Error', 'Please enter a library name');
+      return;
+    }
+
     try {
-      await addBookToFolder({ folderId, bookId: id });
+      const libraryData = {
+        name: newLibraryName.trim(),
+        type: libraryType,
+        userId: user.data.id
+      };
+
+      const newLibrary = await createLibrary(libraryData);
+      setNewLibraryName('');
+      
+      // Add the book to the newly created library
+      await addBookToLibrary({
+        libraryId: newLibrary.id,
+        bookId: parseInt(id)
+      });
+      
+      fetchLibraries();
       setIsFolderModalVisible(false);
-      Alert.alert('Success', 'Book added to folder successfully');
+      Alert.alert('Success', 'Library created and book added successfully');
     } catch (error) {
-      Alert.alert('Error', 'Failed to add book to folder. Please try again.');
+      Alert.alert('Error', 'Failed to create library. Please try again.');
     }
   };
 
-  const handleMarkAsRead = async () => {
+  const handleAddToLibrary = async (libraryId) => {
     try {
-      await markAsRead(id);
-      fetchBook(id);
-      Alert.alert('Success', 'Book marked as read');
+      await addBookToLibrary({
+        libraryId: libraryId,
+        bookId: parseInt(id)
+      });
+      setIsFolderModalVisible(false);
+      Alert.alert('Success', 'Book added to library successfully');
     } catch (error) {
-      Alert.alert('Error', 'Failed to mark book as read. Please try again.');
+      if (error.response?.data?.error === 'Book is already in this library') {
+        Alert.alert('Already Added', 'This book is already in this library');
+      } else {
+        Alert.alert('Error', 'Failed to add book to library. Please try again.');
+      }
     }
   };
 
@@ -62,13 +97,24 @@ export default function BookDetailsScreen() {
     router.push(`/review/${id}`);
   };
 
-  const renderFolderItem = ({ item }) => (
+  const renderLibrary = ({ item }) => (
     <Card
       variant="compact"
       title={item.name}
-      onPress={() => handleAddToFolder(item.id)}
-      style={styles.folderItem}
-    />
+      onPress={() => handleAddToLibrary(item.id)}
+      style={styles.libraryItem}
+    >
+      <View style={styles.libraryInfo}>
+        <Ionicons 
+          name={item.type === 'READ' ? 'book' : item.type === 'WANT_TO_READ' ? 'bookmark' : 'folder'} 
+          size={20} 
+          color="#666" 
+        />
+        <Text style={styles.bookCount}>
+          {item._count?.entries || 0} books
+        </Text>
+      </View>
+    </Card>
   );
 
   const renderReview = ({ item }) => (
@@ -90,6 +136,9 @@ export default function BookDetailsScreen() {
           ))}
         </View>
       )}
+      <Text style={styles.reviewDate}>
+        {new Date(item.createdAt).toLocaleDateString()}
+      </Text>
     </Card>
   );
 
@@ -104,7 +153,7 @@ export default function BookDetailsScreen() {
         <Text style={styles.errorText}>Failed to load book details</Text>
         <Button
           title="Try Again"
-          onPress={() => fetchBook(id)}
+          onPress={fetchBook}
           style={styles.retryButton}
         />
       </View>
@@ -133,21 +182,23 @@ export default function BookDetailsScreen() {
             variant="secondary"
             size="small"
             title="Back"
-            onPress={() => router.back()}
+            onPress={() => router.push('/')}
             style={styles.backButton}
           />
-          <Button
-            variant="secondary"
-            size="small"
-            title="Add to Folder"
-            onPress={() => setIsFolderModalVisible(true)}
-            style={styles.addButton}
-          />
+          {user && (
+            <Button
+              variant="secondary"
+              size="small"
+              title="Add to Library"
+              onPress={() => setIsFolderModalVisible(true)}
+              style={styles.addButton}
+            />
+          )}
         </View>
 
         <View style={styles.coverContainer}>
           <Image
-            source={{ uri: book.coverImage }}
+            source={{ uri: book.coverUrl || 'https://ui-avatars.com/api/?name=' + encodeURIComponent(book.title) + '&background=random' }}
             style={styles.coverImage}
             resizeMode="cover"
           />
@@ -159,19 +210,35 @@ export default function BookDetailsScreen() {
 
           <View style={styles.ratingContainer}>
             <Ionicons name="star" size={24} color="#FFD700" />
-            <Text style={styles.rating}>{book.rating.toFixed(1)}</Text>
-            <Text style={styles.reviewCount}>({book.reviewCount} reviews)</Text>
+            <Text style={styles.rating}>
+              {book.averageRating ? book.averageRating.toFixed(1) : 'N/A'}
+            </Text>
+            <Text style={styles.reviewCount}>
+              ({book._count?.reviews || 0} reviews)
+            </Text>
           </View>
 
           <View style={styles.metaContainer}>
-            <View style={styles.metaItem}>
-              <Ionicons name="book-outline" size={20} color="#666" />
-              <Text style={styles.metaText}>{book.pages} pages</Text>
-            </View>
-            <View style={styles.metaItem}>
-              <Ionicons name="calendar-outline" size={20} color="#666" />
-              <Text style={styles.metaText}>{book.publishedYear}</Text>
-            </View>
+            {book.pages && (
+              <View style={styles.metaItem}>
+                <Ionicons name="book-outline" size={20} color="#666" />
+                <Text style={styles.metaText}>{book.pages} pages</Text>
+              </View>
+            )}
+            {book.publishDate && (
+              <View style={styles.metaItem}>
+                <Ionicons name="calendar-outline" size={20} color="#666" />
+                <Text style={styles.metaText}>
+                  {new Date(book.publishDate).getFullYear()}
+                </Text>
+              </View>
+            )}
+            {book.language && (
+              <View style={styles.metaItem}>
+                <Ionicons name="language-outline" size={20} color="#666" />
+                <Text style={styles.metaText}>{book.language}</Text>
+              </View>
+            )}
           </View>
 
           {book.genres?.length > 0 && (
@@ -184,16 +251,15 @@ export default function BookDetailsScreen() {
             </View>
           )}
 
-          <Text style={styles.description}>{book.description}</Text>
+          {book.description && (
+            <View style={styles.descriptionContainer}>
+              <Text style={styles.descriptionTitle}>Description</Text>
+              <Text style={styles.description}>{book.description}</Text>
+            </View>
+          )}
 
           {user && (
             <View style={styles.actionButtons}>
-              <Button
-                title="Mark as Read"
-                onPress={handleMarkAsRead}
-                loading={markingAsRead}
-                style={styles.actionButton}
-              />
               <Button
                 variant="secondary"
                 title="Write Review"
@@ -205,13 +271,9 @@ export default function BookDetailsScreen() {
 
           <View style={styles.reviewsSection}>
             <Text style={styles.sectionTitle}>Reviews</Text>
-            {reviewsLoading ? (
-              <LoadingScreen message="Loading reviews..." />
-            ) : reviewsError ? (
-              <Text style={styles.errorText}>Failed to load reviews</Text>
-            ) : reviews?.length > 0 ? (
+            {book.reviews?.length > 0 ? (
               <FlatList
-                data={reviews}
+                data={book.reviews}
                 renderItem={renderReview}
                 keyExtractor={(item) => item.id}
                 scrollEnabled={false}
@@ -228,10 +290,10 @@ export default function BookDetailsScreen() {
         transparent
         animationType="slide"
         onRequestClose={() => setIsFolderModalVisible(false)}>
-        <View style={styles.modalContainer}>
+        <View style={styles.modalOverlay}>
           <View style={styles.modalContent}>
             <View style={styles.modalHeader}>
-              <Text style={styles.modalTitle}>Add to Folder</Text>
+              <Text style={styles.modalTitle}>Add to Library</Text>
               <Button
                 variant="secondary"
                 size="small"
@@ -241,25 +303,49 @@ export default function BookDetailsScreen() {
               />
             </View>
 
-            {foldersLoading ? (
-              <LoadingScreen message="Loading folders..." />
-            ) : foldersError ? (
-              <View style={styles.errorContainer}>
-                <Text style={styles.errorText}>Failed to load folders</Text>
-                <Button
-                  title="Try Again"
-                  onPress={fetchFolders}
-                  style={styles.retryButton}
-                />
+            <ScrollView style={styles.modalScrollView}>
+              <View style={styles.createLibrarySection}>
+                <Text style={styles.sectionTitle}>Create New Library</Text>
+                <View style={styles.inputContainer}>
+                  <TextInput
+                    style={styles.input}
+                    placeholder="Library name"
+                    value={newLibraryName}
+                    onChangeText={setNewLibraryName}
+                  />
+                  <Button
+                    title="Create"
+                    onPress={handleCreateLibrary}
+                    loading={creatingLibrary}
+                    style={styles.createButton}
+                  />
+                </View>
               </View>
-            ) : (
-              <FlatList
-                data={folders}
-                renderItem={renderFolderItem}
-                keyExtractor={(item) => item.id}
-                contentContainerStyle={styles.folderList}
-              />
-            )}
+
+              <View style={styles.existingLibrariesSection}>
+                <Text style={styles.sectionTitle}>Existing Libraries</Text>
+                {libraries?.map((library) => (
+                  <Card
+                    key={library.id}
+                    variant="compact"
+                    title={library.name}
+                    onPress={() => handleAddToLibrary(library.id)}
+                    style={styles.libraryItem}
+                  >
+                    <View style={styles.libraryInfo}>
+                      <Ionicons 
+                        name={library.type === 'READ' ? 'book' : library.type === 'WANT_TO_READ' ? 'bookmark' : 'folder'} 
+                        size={20} 
+                        color="#666" 
+                      />
+                      <Text style={styles.bookCount}>
+                        {library.entries?.length || 0} books
+                      </Text>
+                    </View>
+                  </Card>
+                ))}
+              </View>
+            </ScrollView>
           </View>
         </View>
       </Modal>
@@ -272,33 +358,16 @@ const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: '#fff',
   },
-  errorContainer: {
-    flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
-    padding: 20,
-  },
-  errorText: {
-    fontSize: 16,
-    color: '#666',
-    marginTop: 16,
-    marginBottom: 24,
-    textAlign: 'center',
-  },
-  retryButton: {
-    width: 200,
-  },
   header: {
     flexDirection: 'row',
     justifyContent: 'space-between',
-    alignItems: 'center',
     padding: 16,
   },
   backButton: {
-    width: 80,
+    marginRight: 8,
   },
   addButton: {
-    width: 120,
+    marginLeft: 8,
   },
   coverContainer: {
     alignItems: 'center',
@@ -307,15 +376,7 @@ const styles = StyleSheet.create({
   coverImage: {
     width: 200,
     height: 300,
-    borderRadius: 12,
-    shadowColor: '#000',
-    shadowOffset: {
-      width: 0,
-      height: 4,
-    },
-    shadowOpacity: 0.2,
-    shadowRadius: 8,
-    elevation: 5,
+    borderRadius: 8,
   },
   content: {
     padding: 16,
@@ -323,7 +384,6 @@ const styles = StyleSheet.create({
   title: {
     fontSize: 24,
     fontWeight: 'bold',
-    color: '#333',
     marginBottom: 8,
   },
   author: {
@@ -339,7 +399,6 @@ const styles = StyleSheet.create({
   rating: {
     fontSize: 18,
     fontWeight: 'bold',
-    color: '#333',
     marginLeft: 8,
   },
   reviewCount: {
@@ -349,17 +408,19 @@ const styles = StyleSheet.create({
   },
   metaContainer: {
     flexDirection: 'row',
+    flexWrap: 'wrap',
     marginBottom: 16,
   },
   metaItem: {
     flexDirection: 'row',
     alignItems: 'center',
-    marginRight: 24,
+    marginRight: 16,
+    marginBottom: 8,
   },
   metaText: {
     fontSize: 14,
     color: '#666',
-    marginLeft: 8,
+    marginLeft: 4,
   },
   tagsContainer: {
     flexDirection: 'row',
@@ -368,38 +429,41 @@ const styles = StyleSheet.create({
   },
   tag: {
     backgroundColor: '#f0f0f0',
-    borderRadius: 16,
     paddingHorizontal: 12,
     paddingVertical: 6,
+    borderRadius: 16,
     marginRight: 8,
     marginBottom: 8,
   },
   tagText: {
-    fontSize: 12,
+    fontSize: 14,
     color: '#666',
+  },
+  descriptionContainer: {
+    marginBottom: 24,
+  },
+  descriptionTitle: {
+    fontSize: 18,
+    fontWeight: 'bold',
+    marginBottom: 8,
   },
   description: {
     fontSize: 16,
-    color: '#333',
     lineHeight: 24,
-    marginBottom: 24,
+    color: '#333',
   },
   actionButtons: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
     marginBottom: 24,
   },
   actionButton: {
-    flex: 1,
-    marginHorizontal: 8,
+    width: '100%',
   },
   reviewsSection: {
-    marginTop: 24,
+    marginBottom: 24,
   },
   sectionTitle: {
     fontSize: 20,
     fontWeight: 'bold',
-    color: '#333',
     marginBottom: 16,
   },
   reviewCard: {
@@ -414,50 +478,99 @@ const styles = StyleSheet.create({
   reviewerName: {
     fontSize: 16,
     fontWeight: 'bold',
-    color: '#333',
   },
   reviewText: {
-    fontSize: 14,
-    color: '#666',
-    lineHeight: 20,
+    fontSize: 16,
+    lineHeight: 24,
     marginBottom: 8,
   },
-  noReviews: {
+  reviewDate: {
     fontSize: 14,
+    color: '#666',
+    marginTop: 8,
+  },
+  noReviews: {
+    fontSize: 16,
     color: '#666',
     textAlign: 'center',
     marginTop: 16,
   },
-  modalContainer: {
+  modalOverlay: {
     flex: 1,
-    justifyContent: 'flex-end',
     backgroundColor: 'rgba(0, 0, 0, 0.5)',
+    justifyContent: 'flex-end',
   },
   modalContent: {
-    backgroundColor: '#fff',
-    borderTopLeftRadius: 20,
-    borderTopRightRadius: 20,
-    padding: 16,
+    backgroundColor: 'white',
+    borderRadius: 10,
+    padding: 20,
+    width: '90%',
     maxHeight: '80%',
+  },
+  modalScrollView: {
+    maxHeight: '100%',
   },
   modalHeader: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    marginBottom: 16,
+    marginBottom: 20,
   },
   modalTitle: {
     fontSize: 20,
     fontWeight: 'bold',
-    color: '#333',
   },
   closeButton: {
-    width: 80,
+    marginLeft: 10,
   },
-  folderList: {
-    paddingVertical: 8,
+  createLibrarySection: {
+    marginBottom: 20,
   },
-  folderItem: {
-    marginBottom: 8,
+  existingLibrariesSection: {
+    marginBottom: 20,
   },
-}); 
+  inputContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginBottom: 10,
+  },
+  input: {
+    flex: 1,
+    borderWidth: 1,
+    borderColor: '#ddd',
+    borderRadius: 5,
+    padding: 10,
+    marginRight: 10,
+  },
+  createButton: {
+    minWidth: 100,
+  },
+  libraryItem: {
+    marginBottom: 10,
+  },
+  libraryInfo: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginTop: 5,
+  },
+  bookCount: {
+    marginLeft: 5,
+    color: '#666',
+  },
+  errorContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    padding: 16,
+  },
+  errorText: {
+    fontSize: 16,
+    color: '#666',
+    textAlign: 'center',
+    marginTop: 16,
+    marginBottom: 16,
+  },
+  retryButton: {
+    minWidth: 120,
+  },
+});

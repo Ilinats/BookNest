@@ -1,4 +1,4 @@
-import React, { useState, useCallback } from 'react';
+import React, { useState, useCallback, useEffect } from 'react';
 import {
   View,
   Text,
@@ -9,41 +9,97 @@ import {
   Alert,
   TextInput,
   Modal,
+  ActivityIndicator,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { useRouter } from 'expo-router';
 import { library } from '../services/api';
 import { useApi } from '../hooks/useApi';
+import { useApp } from '../context/AppContext';
 
 export default function LibraryScreen() {
   const router = useRouter();
+  const { user } = useApp();
   const [isModalVisible, setIsModalVisible] = useState(false);
-  const [newFolderName, setNewFolderName] = useState('');
+  const [newLibraryName, setNewLibraryName] = useState('');
+  const [libraryType, setLibraryType] = useState('CUSTOM');
 
-  const { data: folders, loading, execute: fetchFolders } = useApi(library.getFolders);
-  const { execute: createFolder } = useApi(library.createFolder);
-  const { execute: deleteFolder } = useApi(library.deleteFolder);
+  const { data: libraries, loading, execute: fetchLibraries } = useApi(library.getUserLibraries);
+  const { execute: createLibrary } = useApi(library.createLibrary);
+  const { execute: deleteLibrary } = useApi(library.deleteLibrary);
 
-  const handleCreateFolder = async () => {
-    if (!newFolderName.trim()) {
-      Alert.alert('Error', 'Please enter a folder name');
+  useEffect(() => {
+    if (user?.data.id) {
+      fetchLibraries(user.data.id);
+    }
+  }, [user?.data.id]);
+
+  const handleCreateLibrary = async () => {
+    console.log('=== DEBUG: Create Library Function Called ===');
+    console.log('Button pressed at:', new Date().toISOString());
+    
+    // Debug: Check if function is even called
+    Alert.alert('Debug', 'Function called!');
+    
+    console.log('newLibraryName:', newLibraryName);
+    console.log('libraryType:', libraryType);
+    console.log('user object:', user);
+    console.log('user?.userId:', user?.data.id);
+    console.log('parseInt(user.userId):', parseInt(user.data.id));
+
+    if (!newLibraryName.trim()) {
+      console.log('ERROR: Empty library name');
+      Alert.alert('Error', 'Please enter a library name');
       return;
     }
 
+    if (!user?.data.id) {
+      console.log('ERROR: No user ID found');
+      Alert.alert('Error', 'You must be logged in to create a library');
+      return;
+    }
+
+    const payload = {
+      name: newLibraryName.trim(),
+      type: libraryType,
+      userId: parseInt(user.data.id)
+    };
+    
+    console.log('About to send payload:', payload);
+
     try {
-      await createFolder({ name: newFolderName });
-      setNewFolderName('');
+      console.log('Calling createLibrary function...');
+      const result = await createLibrary(payload);
+      console.log('Create library success:', result);
+      
+      setNewLibraryName('');
+      setLibraryType('CUSTOM');
       setIsModalVisible(false);
-      fetchFolders();
+      
+      console.log('Refreshing libraries...');
+      await fetchLibraries(user.id);
+      
+      Alert.alert('Success', 'Library created successfully!');
     } catch (error) {
-      // Error is handled by useApi hook
+      console.error('=== CREATE LIBRARY ERROR ===');
+      console.error('Error object:', error);
+      console.error('Error message:', error.message);
+      console.error('Error response:', error.response);
+      console.error('Error response data:', error.response?.data);
+      console.error('Error response status:', error.response?.status);
+      
+      Alert.alert(
+        'Error',
+        `Failed to create library: ${error.response?.data?.message || error.message}`,
+        [{ text: 'OK', style: 'default' }]
+      );
     }
   };
 
-  const handleDeleteFolder = async (folderId) => {
+  const handleDeleteLibrary = async (libraryId) => {
     Alert.alert(
-      'Delete Folder',
-      'Are you sure you want to delete this folder?',
+      'Delete Library',
+      'Are you sure you want to delete this library? This action cannot be undone.',
       [
         {
           text: 'Cancel',
@@ -54,8 +110,8 @@ export default function LibraryScreen() {
           style: 'destructive',
           onPress: async () => {
             try {
-              await deleteFolder(folderId);
-              fetchFolders();
+              await deleteLibrary(libraryId);
+              fetchLibraries(user.id);
             } catch (error) {
               // Error is handled by useApi hook
             }
@@ -65,25 +121,63 @@ export default function LibraryScreen() {
     );
   };
 
-  const renderFolder = ({ item }) => (
+  const renderLibrary = ({ item }) => (
     <TouchableOpacity
-      style={styles.folderCard}
-      onPress={() => router.push(`/library/folder/${item.id}`)}>
-      <View style={styles.folderIcon}>
-        <Ionicons name="folder" size={24} color="#007AFF" />
+      style={styles.libraryCard}
+      onPress={() => router.push(`/library/${item.id}`)}>
+      <View style={styles.libraryIcon}>
+        <Ionicons 
+          name={getLibraryIcon(item.type)} 
+          size={24} 
+          color="#007AFF" 
+        />
       </View>
-      <View style={styles.folderInfo}>
-        <Text style={styles.folderName}>{item.name}</Text>
-        <Text style={styles.bookCount}>{item.bookCount} books</Text>
+      <View style={styles.libraryInfo}>
+        <Text style={styles.libraryName}>{item.name}</Text>
+        <Text style={styles.bookCount}>
+          {item.entries?.length || 0} book{item.entries?.length !== 1 ? 's' : ''}
+        </Text>
       </View>
-      <TouchableOpacity
-        style={styles.deleteButton}
-        onPress={() => handleDeleteFolder(item.id)}>
-        <Ionicons name="trash-outline" size={24} color="#FF3B30" />
-      </TouchableOpacity>
+      {item.type === 'CUSTOM' && (
+        <TouchableOpacity
+          style={styles.deleteButton}
+          onPress={() => handleDeleteLibrary(item.id)}>
+          <Ionicons name="trash-outline" size={24} color="#FF3B30" />
+        </TouchableOpacity>
+      )}
       <Ionicons name="chevron-forward" size={24} color="#666" />
     </TouchableOpacity>
   );
+
+  const getLibraryIcon = (type) => {
+    switch (type) {
+      case 'CURRENTLY_READING':
+        return 'book';
+      case 'PHYSICAL_TBR':
+        return 'library';
+      case 'WANT_TO_READ':
+        return 'bookmark';
+      case 'READ':
+        return 'checkmark-circle';
+      default:
+        return 'folder';
+    }
+  };
+
+  // Debug: Log when component renders
+  console.log('LibraryScreen render - user:', user);
+  console.log('LibraryScreen render - libraries:', libraries);
+
+  if (loading && !libraries) {
+    return (
+      <SafeAreaView style={styles.container}>
+        <View style={styles.loadingContainer}>
+          <ActivityIndicator size="large" color="#007AFF" />
+          <Text style={styles.loadingText}>Loading libraries...</Text>
+        </View>
+      </SafeAreaView>
+    );
+  }
 
   return (
     <SafeAreaView style={styles.container}>
@@ -91,18 +185,30 @@ export default function LibraryScreen() {
         <Text style={styles.title}>My Library</Text>
         <TouchableOpacity
           style={styles.addButton}
-          onPress={() => setIsModalVisible(true)}>
+          onPress={() => {
+            console.log('Add button pressed - opening modal');
+            setIsModalVisible(true);
+          }}>
           <Ionicons name="add" size={24} color="#007AFF" />
         </TouchableOpacity>
       </View>
 
       <FlatList
-        data={folders}
-        renderItem={renderFolder}
-        keyExtractor={(item) => item.id}
-        contentContainerStyle={styles.folderList}
+        data={libraries}
+        renderItem={renderLibrary}
+        keyExtractor={(item) => item.id.toString()}
+        contentContainerStyle={styles.libraryList}
         refreshing={loading}
-        onRefresh={fetchFolders}
+        onRefresh={() => fetchLibraries(user.id)}
+        ListEmptyComponent={
+          <View style={styles.emptyContainer}>
+            <Ionicons name="library-outline" size={48} color="#666" />
+            <Text style={styles.emptyText}>No libraries yet</Text>
+            <Text style={styles.emptySubtext}>
+              Create a new library to start organizing your books
+            </Text>
+          </View>
+        }
       />
 
       <Modal
@@ -112,23 +218,38 @@ export default function LibraryScreen() {
         onRequestClose={() => setIsModalVisible(false)}>
         <View style={styles.modalContainer}>
           <View style={styles.modalContent}>
-            <Text style={styles.modalTitle}>Create New Folder</Text>
+            <Text style={styles.modalTitle}>Create New Library</Text>
             <TextInput
               style={styles.input}
-              placeholder="Folder name"
-              value={newFolderName}
-              onChangeText={setNewFolderName}
+              placeholder="Library name"
+              value={newLibraryName}
+              onChangeText={(text) => {
+                console.log('Text input changed:', text);
+                setNewLibraryName(text);
+              }}
               autoFocus
             />
+            
+            {/* Debug info display */}
+            <Text style={{ fontSize: 12, color: '#666', marginBottom: 10 }}>
+              Debug: Name=`{newLibraryName}`, User={user?.id}
+            </Text>
+            
             <View style={styles.modalButtons}>
               <TouchableOpacity
                 style={[styles.modalButton, styles.cancelButton]}
-                onPress={() => setIsModalVisible(false)}>
+                onPress={() => {
+                  console.log('Cancel button pressed');
+                  setIsModalVisible(false);
+                }}>
                 <Text style={styles.cancelButtonText}>Cancel</Text>
               </TouchableOpacity>
               <TouchableOpacity
                 style={[styles.modalButton, styles.createButton]}
-                onPress={handleCreateFolder}>
+                onPress={() => {
+                  console.log('Create button pressed - calling handleCreateLibrary');
+                  handleCreateLibrary();
+                }}>
                 <Text style={styles.createButtonText}>Create</Text>
               </TouchableOpacity>
             </View>
@@ -160,10 +281,10 @@ const styles = StyleSheet.create({
   addButton: {
     padding: 8,
   },
-  folderList: {
+  libraryList: {
     padding: 16,
   },
-  folderCard: {
+  libraryCard: {
     flexDirection: 'row',
     alignItems: 'center',
     backgroundColor: '#f8f9fa',
@@ -179,7 +300,7 @@ const styles = StyleSheet.create({
     shadowRadius: 4,
     elevation: 3,
   },
-  folderIcon: {
+  libraryIcon: {
     width: 40,
     height: 40,
     borderRadius: 20,
@@ -188,10 +309,10 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     marginRight: 12,
   },
-  folderInfo: {
+  libraryInfo: {
     flex: 1,
   },
-  folderName: {
+  libraryName: {
     fontSize: 16,
     fontWeight: 'bold',
     color: '#333',
@@ -260,4 +381,32 @@ const styles = StyleSheet.create({
     fontSize: 16,
     fontWeight: 'bold',
   },
-}); 
+  loadingContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  loadingText: {
+    marginTop: 12,
+    fontSize: 16,
+    color: '#666',
+  },
+  emptyContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    padding: 32,
+  },
+  emptyText: {
+    fontSize: 18,
+    fontWeight: 'bold',
+    color: '#333',
+    marginTop: 16,
+    marginBottom: 8,
+  },
+  emptySubtext: {
+    fontSize: 14,
+    color: '#666',
+    textAlign: 'center',
+  },
+});

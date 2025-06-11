@@ -122,6 +122,8 @@ class ReviewService {
     async createReview(reviewData) {
         const { userId, bookId, rating, text, pace, focus, lovable, contentWarnings, moodIds = [], tropeIds = [], genreIds = [] } = reviewData;
 
+        console.log('Creating review for user:', userId, 'book:', bookId);
+
         // Verify user and book exist
         const [user, book] = await Promise.all([
             this.prisma.user.findUnique({ where: { id: parseInt(userId) } }),
@@ -166,8 +168,8 @@ class ReviewService {
             throw new Error('One or more genre IDs are invalid');
         }
 
-        // Find the Read folder
-        const readFolder = await this.prisma.library.findFirst({
+        // Find or create the Read folder
+        let readFolder = await this.prisma.library.findFirst({
             where: {
                 userId: parseInt(userId),
                 name: 'Read'
@@ -175,8 +177,17 @@ class ReviewService {
         });
 
         if (!readFolder) {
-            throw new Error('Read folder not found');
+            console.log('Creating Read folder for user:', userId);
+            readFolder = await this.prisma.library.create({
+                data: {
+                    name: 'Read',
+                    type: 'READ',
+                    userId: parseInt(userId)
+                }
+            });
         }
+
+        console.log('Using Read folder:', readFolder.id);
 
         // Create the review and add book to Read folder in a transaction
         const review = await this.prisma.$transaction(async (prisma) => {
@@ -392,6 +403,27 @@ class ReviewService {
         ]);
 
         return { moods, tropes, genres };
+    }
+
+    async updateBookRatingStats(bookId) {
+        // Get all reviews for the book
+        const reviews = await this.prisma.review.findMany({
+            where: { bookId: parseInt(bookId) }
+        });
+
+        // Calculate average rating and review count
+        const totalRating = reviews.reduce((sum, review) => sum + review.rating, 0);
+        const averageRating = reviews.length > 0 ? totalRating / reviews.length : null;
+        const reviewCount = reviews.length;
+
+        // Update book with new stats
+        await this.prisma.book.update({
+            where: { id: parseInt(bookId) },
+            data: {
+                averageRating,
+                reviewCount
+            }
+        });
     }
 }
 

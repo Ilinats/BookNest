@@ -16,8 +16,10 @@ api.interceptors.request.use(
   async (config) => {
     try {
       const token = await AsyncStorage.getItem('userToken');
+      console.log('Token from storage:', token);
       if (token) {
         config.headers.Authorization = `Bearer ${token}`;
+        console.log('Request headers:', config.headers);
       }
       return config;
     } catch (error) {
@@ -34,6 +36,7 @@ api.interceptors.request.use(
 api.interceptors.response.use(
   (response) => response,
   async (error) => {
+    console.error('API error:', error.response?.data);
     if (error.response?.status === 401) {
       await AsyncStorage.removeItem('userToken');
     }
@@ -81,13 +84,14 @@ export const books = {
 
 // Library endpoints
 export const library = {
-  getFolders: () => api.get('/api/library/folders'),
-  createFolder: (folderData) => api.post('/api/library/folders', folderData),
-  updateFolder: (folderId, folderData) => api.put(`/api/library/folders/${folderId}`, folderData),
-  deleteFolder: (folderId) => api.delete(`/api/library/folders/${folderId}`),
-  getFolderBooks: (folderId) => api.get(`/api/library/folders/${folderId}/books`),
-  addBookToFolder: (folderId, bookId) => api.post(`/api/library/folders/${folderId}/books`, { bookId }),
-  removeBookFromFolder: (folderId, bookId) => api.delete(`/api/library/folders/${folderId}/books/${bookId}`),
+  getUserLibraries: (userId) => api.get(`/api/libraries/user/${userId}`),
+  createLibrary: (libraryData) => api.post('/api/libraries', libraryData),
+  updateLibrary: (libraryId, libraryData) => api.put(`/api/libraries/${libraryId}`, libraryData),
+  deleteLibrary: (libraryId) => api.delete(`/api/libraries/${libraryId}`),
+  getLibrary: (libraryId) => api.get(`/api/libraries/${libraryId}`),
+  getLibraryEntries: (libraryId) => api.get(`/api/library-entries/library/${libraryId}`),
+  addBookToLibrary: (data) => api.post('/api/library-entries', data),
+  removeBookFromLibrary: (entryId) => api.delete(`/api/library-entries/${entryId}`),
 };
 
 // Challenges endpoints
@@ -96,6 +100,14 @@ export const challenges = {
   getPast: () => api.get('/api/reading-challenges/past'),
   create: (challengeData) => api.post('/api/reading-challenges', challengeData),
   updateProgress: (challengeId, progress) => api.put(`/api/reading-challenges/${challengeId}/progress`, progress),
+  getChallenge: (id) => api.get(`/api/reading-challenges/${id}`),
+};
+
+// Challenge entries endpoints
+export const challengeEntries = {
+  getChallengeEntries: (challengeId) => api.get(`/api/challenge-entries/challenge/${challengeId}`),
+  addBookToChallenge: (data) => api.post('/api/challenge-entries', data),
+  removeBookFromChallenge: (entryId) => api.delete(`/api/challenge-entries/${entryId}`),
 };
 
 // User endpoints - Added error handling

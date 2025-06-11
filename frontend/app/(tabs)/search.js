@@ -28,9 +28,8 @@ export default function SearchScreen() {
   const [debouncedQuery, setDebouncedQuery] = useState('');
   const [showFilters, setShowFilters] = useState(false);
 
-  const { data: searchResponse, loading, error, execute: searchBooks } = useApi();
+  const { execute: searchBooks, data, loading, error } = useApi(books.search);
 
-  // Debounce search query
   useEffect(() => {
     const timeoutId = setTimeout(() => {
       setDebouncedQuery(searchQuery);
@@ -39,7 +38,6 @@ export default function SearchScreen() {
     return () => clearTimeout(timeoutId);
   }, [searchQuery]);
 
-  // Auto-search when debounced query changes (if not empty)
   useEffect(() => {
     if (debouncedQuery.trim()) {
       handleSearch();
@@ -70,7 +68,7 @@ export default function SearchScreen() {
         maxRating: parseFloat(maxRating.toFixed(1)),
       };
 
-      await searchBooks(() => books.search(debouncedQuery, filters));
+      await searchBooks(debouncedQuery, filters);
     } catch (error) {
       console.error('Search error:', error);
     }
@@ -85,7 +83,7 @@ export default function SearchScreen() {
   };
 
   // Extract books from response
-  const searchResults = searchResponse?.books || [];
+  const searchResults = data?.books || [];
 
   const renderBook = ({ item }) => (
     <TouchableOpacity

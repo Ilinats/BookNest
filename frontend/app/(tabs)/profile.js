@@ -22,7 +22,7 @@ export default function ProfileScreen() {
   const [activeTab, setActiveTab] = useState('stats');
 
   const { data: profile, loading: profileLoading, error: profileError, execute: fetchProfile } = useApi(user.getProfile);
-  const { data: reviews, loading: reviewsLoading, error: reviewsError, execute: fetchReviews } = useApi(user.getReviews);
+  const { data: reviewsData, loading: reviewsLoading, error: reviewsError, execute: fetchReviews } = useApi(user.getReviews);
 
   useEffect(() => {
     if (currentUser) {
@@ -104,6 +104,8 @@ export default function ProfileScreen() {
     );
   }
 
+  const reviews = reviewsData?.data || [];
+
   return (
     <SafeAreaView style={styles.container}>
       <ScrollView>
@@ -111,13 +113,13 @@ export default function ProfileScreen() {
           <View style={styles.profileInfo}>
             <View style={styles.avatarContainer}>
               <Image
-                source={{ uri: profile?.avatar || 'https://ui-avatars.com/api/?name=' + (profile?.username || 'User') + '&background=random' }}
+                source={{ uri: profile?.data?.avatar || 'https://ui-avatars.com/api/?name=' + (profile?.data?.username || 'User') + '&background=random' }}
                 style={styles.avatar}
               />
             </View>
             <View style={styles.userInfo}>
-              <Text style={styles.username}>{profile?.username}</Text>
-              <Text style={styles.email}>{profile?.email}</Text>
+              <Text style={styles.username}>{profile?.data?.username}</Text>
+              <Text style={styles.email}>{profile?.data?.email}</Text>
             </View>
           </View>
           <TouchableOpacity style={styles.editButton}>
@@ -148,34 +150,36 @@ export default function ProfileScreen() {
           <View style={styles.statsContainer}>
             <View style={styles.statCard}>
               <Ionicons name="book" size={24} color="#007AFF" />
-              <Text style={styles.statValue}>{profile?.totalBooks || 0}</Text>
+              <Text style={styles.statValue}>{profile?.data?._count?.reviews || 0}</Text>
               <Text style={styles.statLabel}>Books Read</Text>
             </View>
             <View style={styles.statCard}>
               <Ionicons name="star" size={24} color="#FFD700" />
-              <Text style={styles.statValue}>{profile?.averageRating?.toFixed(1) || 0}</Text>
+              <Text style={styles.statValue}>
+                {profile?.data?.reviews?.reduce((acc, review) => acc + review.rating, 0) / (profile?.data?.reviews?.length || 1) || 0}
+              </Text>
               <Text style={styles.statLabel}>Avg. Rating</Text>
             </View>
             <View style={styles.statCard}>
               <Ionicons name="chatbubble" size={24} color="#FF3B30" />
-              <Text style={styles.statValue}>{profile?.totalReviews || 0}</Text>
+              <Text style={styles.statValue}>{profile?.data?._count?.reviews || 0}</Text>
               <Text style={styles.statLabel}>Reviews</Text>
             </View>
             <View style={styles.statCard}>
               <Ionicons name="trophy" size={24} color="#34C759" />
-              <Text style={styles.statValue}>{profile?.challengesCompleted || 0}</Text>
+              <Text style={styles.statValue}>{profile?.data?._count?.challenges || 0}</Text>
               <Text style={styles.statLabel}>Challenges</Text>
             </View>
           </View>
         ) : (
           <View style={styles.reviewsContainer}>
-            {reviews?.map((review) => (
+            {reviews.map((review) => (
               <TouchableOpacity
                 key={review.id}
                 style={styles.reviewCard}
-                onPress={() => router.push(`/book/${review.bookId}`)}>
+                onPress={() => router.push(`/book/${review.book.id}`)}>
                 <View style={styles.reviewHeader}>
-                  <Text style={styles.bookTitle}>{review.bookTitle}</Text>
+                  <Text style={styles.bookTitle}>{review.book.title}</Text>
                   <View style={styles.ratingContainer}>
                     <Ionicons name="star" size={16} color="#FFD700" />
                     <Text style={styles.rating}>{review.rating}</Text>
@@ -184,7 +188,9 @@ export default function ProfileScreen() {
                 <Text style={styles.reviewText} numberOfLines={2}>
                   {review.text}
                 </Text>
-                <Text style={styles.reviewDate}>{review.date}</Text>
+                <Text style={styles.reviewDate}>
+                  {new Date(review.createdAt).toLocaleDateString()}
+                </Text>
               </TouchableOpacity>
             ))}
           </View>

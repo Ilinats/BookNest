@@ -108,6 +108,22 @@ router.get('/user/:userId', readingChallengeController.getUserChallenges);
 
 /**
  * @swagger
+ * /api/reading-challenges/past:
+ *   get:
+ *     summary: Get all past challenges for the current user
+ *     tags: [Reading Challenges]
+ *     security:
+ *       - bearerAuth: []
+ *     responses:
+ *       200:
+ *         description: List of past reading challenges
+ *       400:
+ *         description: Bad request
+ */
+router.get('/past', readingChallengeController.getPastChallenges);
+
+/**
+ * @swagger
  * /api/reading-challenges/{id}:
  *   get:
  *     summary: Get a specific challenge
