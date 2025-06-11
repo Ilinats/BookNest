@@ -13,16 +13,37 @@ const getAllBooks = async (req, res, next) => {
             limit = 10
         } = req.query;
 
+        // Validate and parse numeric parameters
         const filters = {
-            search,
+            search: search?.trim(),
             minRating: minRating ? parseFloat(minRating) : undefined,
             maxRating: maxRating ? parseFloat(maxRating) : undefined,
             minPages: minPages ? parseInt(minPages) : undefined,
             maxPages: maxPages ? parseInt(maxPages) : undefined,
-            language,
+            language: language?.trim(),
             page: parseInt(page),
             limit: parseInt(limit)
         };
+
+        // Validate numeric parameters
+        if (filters.minRating !== undefined && (isNaN(filters.minRating) || filters.minRating < 0 || filters.minRating > 5)) {
+            return res.status(400).json({ error: 'Invalid minRating parameter' });
+        }
+        if (filters.maxRating !== undefined && (isNaN(filters.maxRating) || filters.maxRating < 0 || filters.maxRating > 5)) {
+            return res.status(400).json({ error: 'Invalid maxRating parameter' });
+        }
+        if (filters.minPages !== undefined && (isNaN(filters.minPages) || filters.minPages < 0)) {
+            return res.status(400).json({ error: 'Invalid minPages parameter' });
+        }
+        if (filters.maxPages !== undefined && (isNaN(filters.maxPages) || filters.maxPages < 0)) {
+            return res.status(400).json({ error: 'Invalid maxPages parameter' });
+        }
+        if (isNaN(filters.page) || filters.page < 1) {
+            return res.status(400).json({ error: 'Invalid page parameter' });
+        }
+        if (isNaN(filters.limit) || filters.limit < 1 || filters.limit > 100) {
+            return res.status(400).json({ error: 'Invalid limit parameter' });
+        }
 
         const result = await bookService.getAllBooks(req.prisma, filters);
         res.json(result);

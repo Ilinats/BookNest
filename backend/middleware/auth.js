@@ -28,6 +28,7 @@ const authenticate = async (req, res, next) => {
 
     req.user = { userId: decoded.userId };
     console.log('Set user in request:', req.user);
+
     next();
   } catch (error) {
     console.error('Auth middleware error:', error);

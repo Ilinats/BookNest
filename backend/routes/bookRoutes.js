@@ -311,4 +311,57 @@ router.put('/:id', authenticate, validateBookUpdate, bookController.updateBook);
  */
 router.delete('/:id', authenticate, bookController.deleteBook);
 
+/**
+ * @swagger
+ * /api/books/search:
+ *   get:
+ *     summary: Search books
+ *     description: Search books by title, author, and other criteria
+ *     tags: [Books]
+ *     parameters:
+ *       - in: query
+ *         name: search
+ *         schema:
+ *           type: string
+ *         description: Search term for title or author
+ *       - in: query
+ *         name: minPages
+ *         schema:
+ *           type: integer
+ *           minimum: 0
+ *         description: Minimum number of pages
+ *       - in: query
+ *         name: maxPages
+ *         schema:
+ *           type: integer
+ *           minimum: 0
+ *         description: Maximum number of pages
+ *       - in: query
+ *         name: minRating
+ *         schema:
+ *           type: number
+ *           minimum: 0
+ *           maximum: 5
+ *         description: Minimum rating
+ *       - in: query
+ *         name: maxRating
+ *         schema:
+ *           type: number
+ *           minimum: 0
+ *           maximum: 5
+ *         description: Maximum rating
+ *     responses:
+ *       200:
+ *         description: Successfully retrieved books
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/BooksResponse'
+ *       400:
+ *         description: Invalid query parameters
+ *       500:
+ *         description: Internal server error
+ */
+router.get('/search', bookController.getAllBooks);
+
 module.exports = router;
