@@ -1,5 +1,6 @@
 const swaggerJsdoc = require('swagger-jsdoc');
 const swaggerUi = require('swagger-ui-express');
+const path = require('path');
 
 const options = {
   definition: {
@@ -424,7 +425,37 @@ const options = {
   ]
 };
 
-const specs = swaggerJsdoc(options);
+// Add error handling for swagger-jsdoc
+let specs;
+try {
+  specs = swaggerJsdoc(options);
+  console.log('Swagger documentation generated successfully');
+} catch (error) {
+  console.error('Error generating Swagger documentation:', error.message);
+  console.error('Error details:', error);
+  
+  // Create a minimal fallback spec
+  specs = {
+    openapi: '3.0.0',
+    info: {
+      title: 'BookNest API',
+      version: '1.0.0',
+      description: 'API documentation temporarily unavailable due to parsing error'
+    },
+    paths: {
+      '/health': {
+        get: {
+          summary: 'Health check',
+          responses: {
+            '200': {
+              description: 'API is running'
+            }
+          }
+        }
+      }
+    }
+  };
+}
 
 module.exports = {
   specs,

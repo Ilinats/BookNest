@@ -40,7 +40,8 @@ const config = {
     allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With', 'Accept'],
     credentials: true,
     preflightContinue: false,
-    optionsSuccessStatus: 204
+    optionsSuccessStatus: 204,
+    exposedHeaders: ['Content-Range', 'X-Content-Range']
   },
 };
 
