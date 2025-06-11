@@ -27,6 +27,11 @@ const options = {
         description: 'Production server'
       }
     ],
+    security: [
+      {
+        bearerAuth: []
+      }
+    ],
     tags: [
       {
         name: 'Books',
@@ -413,7 +418,10 @@ const options = {
       }
     }
   },
-  apis: ['./routes/*.js', './controllers/*.js', './index.js']
+  apis: [
+    './routes/*.js',
+    './index.js'
+  ]
 };
 
 const specs = swaggerJsdoc(options);
