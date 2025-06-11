@@ -21,6 +21,20 @@ const authenticateRoutes = require('./routes/auth.js');
 
 const app = express();
 
+app.use(cors());
+
+app.use((req, res, next) => {
+  res.header('Access-Control-Allow-Origin', 'http://localhost:8081');
+  res.header('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, OPTIONS');
+  res.header('Access-Control-Allow-Headers', 'Origin, X-Requested-With, Content-Type, Accept, Authorization');
+
+  if (req.method === 'OPTIONS') {
+    res.sendStatus(200);
+  } else {
+    next();
+  }
+});
+
 // app.use(cors({
 //   origin: '*', // or restrict to your frontend's origin
 //   methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
@@ -45,12 +59,34 @@ app.use((req, res, next) => {
 const prisma = new PrismaClient();
 const PORT = process.env.PORT || 3000;
 
-// app.use((req, res, next) => {
-//   res.header('Access-Control-Allow-Origin', '*'); // Allow all origins
-//   res.header('Access-Control-Allow-Methods', 'GET,PUT,POST,DELETE,OPTIONS');
-//   res.header('Access-Control-Allow-Headers', 'Content-Type, Authorization');
-//   next();
-// });
+const prisma = new PrismaClient({
+  log: ['query', 'info', 'warn', 'error'],
+  datasources: {
+    db: {
+      url: process.env.DATABASE_URL
+    }
+  },
+  __internal: {
+    engine: {
+      connectionTimeout: 10000, // 10 seconds
+      retryAttempts: 5, // Number of retry attempts
+      retryDelay: 1000, // Delay between retries in milliseconds
+    }
+  }
+});
+
+// Test database connection
+async function testConnection() {
+  try {
+    await prisma.$connect();
+    console.log('Successfully connected to the database');
+  } catch (error) {
+    console.error('Failed to connect to the database:', error);
+    process.exit(1);
+  }
+}
+
+testConnection();
 
 app.use(express.json());
 
@@ -109,7 +145,7 @@ app.get('/', (req, res) => {
             books: "/api/books",
             users: "/api/users",
             reviews: "/api/reviews",
-            challenges: "/api/challenges",
+            challenges: "/api/reading-challenges",
             friends: "/api/friends",
             libraries: "/api/libraries",
             libraryEntries: "/api/library-entries",
@@ -133,6 +169,8 @@ app.use('/api/challenge-entries', authenticate, challengeEntryRoutes);
 app.use('/api/reviews', authenticate, reviewRoutes);
 
 app.use(errorHandler);
+
+const PORT = process.env.PORT || 3000;
 
 app.listen(PORT, () => {
     console.log(`Server is running on http://localhost:${PORT}`);

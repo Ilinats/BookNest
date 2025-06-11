@@ -36,6 +36,9 @@ class LibraryService {
       include: {
         entries: {
           include: { book: true }
+        },
+        _count: {
+          select: { entries: true }
         }
       },
       orderBy: [

@@ -33,7 +33,14 @@ class UserController {
                 this.initializeService(req.prisma);
             }
 
-            const { id } = req.params;
+            const id = parseInt(req.params.id);
+            if (isNaN(id)) {
+                return res.status(400).json({
+                    success: false,
+                    message: 'Invalid user ID'
+                });
+            }
+
             const user = await this.userService.getUserById(id);
             
             res.status(200).json({
@@ -124,7 +131,17 @@ class UserController {
                 this.initializeService(req.prisma);
             }
 
-            const userId = req.user.id;
+            console.log('getProfile - req.user:', req.user);
+            const userId = parseInt(req.user.userId);
+            console.log('getProfile - parsed userId:', userId);
+
+            if (isNaN(userId)) {
+                return res.status(400).json({
+                    success: false,
+                    message: 'Invalid user ID'
+                });
+            }
+
             const user = await this.userService.getUserById(userId);
             
             res.status(200).json({
@@ -132,6 +149,7 @@ class UserController {
                 data: user
             });
         } catch (error) {
+            console.error('getProfile error:', error);
             next(error);
         }
     };
@@ -142,7 +160,14 @@ class UserController {
                 this.initializeService(req.prisma);
             }
 
-            const userId = req.user.id;
+            const userId = parseInt(req.user.userId);
+            if (isNaN(userId)) {
+                return res.status(400).json({
+                    success: false,
+                    message: 'Invalid user ID'
+                });
+            }
+
             const reviews = await this.userService.getUserReviews(userId);
             
             res.status(200).json({

@@ -5,6 +5,19 @@ const prisma = new PrismaClient();
 const addBookToLibrary = async (req, res) => {
   try {
     const { libraryId, bookId } = req.body;
+
+    // Check if the book is already in the library
+    const existingEntry = await prisma.libraryEntry.findFirst({
+      where: {
+        libraryId: parseInt(libraryId),
+        bookId: parseInt(bookId)
+      }
+    });
+
+    if (existingEntry) {
+      return res.status(400).json({ error: 'Book is already in this library' });
+    }
+
     const entry = await prisma.libraryEntry.create({
       data: {
         libraryId: parseInt(libraryId),
@@ -16,7 +29,11 @@ const addBookToLibrary = async (req, res) => {
     });
     res.status(201).json(entry);
   } catch (error) {
-    res.status(400).json({ error: error.message });
+    if (error.code === 'P2002') {
+      res.status(400).json({ error: 'Book is already in this library' });
+    } else {
+      res.status(400).json({ error: error.message });
+    }
   }
 };
 

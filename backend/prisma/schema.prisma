@@ -12,17 +12,16 @@ model User {
   username   String             @unique
   email      String             @unique
   password   String
-  reviews    Review[]
+  createdAt  DateTime           @default(now())
+  addedMe    Friendship[]       @relation("FriendOf")
+  friends    Friendship[]       @relation("UserFriends")
   libraries  Library[]
   challenges ReadingChallenge[]
-  friends    Friendship[]       @relation("UserFriends")
-  addedMe    Friendship[]       @relation("FriendOf")
-
-  createdAt DateTime @default(now())
+  reviews    Review[]
 }
 
 model Book {
-  id            Int      @id @default(autoincrement())
+  id            Int              @id @default(autoincrement())
   title         String
   author        String
   publishDate   DateTime
@@ -32,31 +31,27 @@ model Book {
   pages         Int
   description   String?
   coverUrl      String?
-
-  reviews      Review[]
-  inLibraries  LibraryEntry[]
-  inChallenges ChallengeEntry[]
+  inChallenges  ChallengeEntry[]
+  inLibraries   LibraryEntry[]
+  reviews       Review[]
 }
 
 model Review {
-  id     Int  @id @default(autoincrement())
-  user   User @relation(fields: [userId], references: [id])
-  userId Int
-  book   Book @relation(fields: [bookId], references: [id])
-  bookId Int
-
+  id              Int      @id @default(autoincrement())
+  userId          Int
+  bookId          Int
   rating          Float
   text            String?
   pace            Pace?
   focus           Focus?
   lovable         Boolean?
   contentWarnings String?
-
-  createdAt DateTime @default(now())
-
-  moods  Mood[]  @relation("ReviewMoods")
-  tropes Trope[] @relation("ReviewTropes")
-  genres Genre[] @relation("ReviewGenres")
+  createdAt       DateTime @default(now())
+  book            Book     @relation(fields: [bookId], references: [id])
+  user            User     @relation(fields: [userId], references: [id])
+  genres          Genre[]  @relation("ReviewGenres")
+  moods           Mood[]   @relation("ReviewMoods")
+  tropes          Trope[]  @relation("ReviewTropes")
 }
 
 model Mood {
@@ -79,52 +74,52 @@ model Genre {
 
 model Library {
   id      Int            @id @default(autoincrement())
-  user    User           @relation(fields: [userId], references: [id])
   userId  Int
   name    String
   type    LibraryType
+  user    User           @relation(fields: [userId], references: [id])
   entries LibraryEntry[]
 }
 
 model LibraryEntry {
   id        Int      @id @default(autoincrement())
-  library   Library  @relation(fields: [libraryId], references: [id])
   libraryId Int
-  book      Book     @relation(fields: [bookId], references: [id])
   bookId    Int
   addedAt   DateTime @default(now())
+  book      Book     @relation(fields: [bookId], references: [id])
+  library   Library  @relation(fields: [libraryId], references: [id])
+
+  @@unique([libraryId, bookId])
 }
 
 model ReadingChallenge {
-  id         Int              @id @default(autoincrement())
-  user       User             @relation(fields: [userId], references: [id])
-  userId     Int
-  name       String
-  startDate  DateTime
-  endDate    DateTime
-  goal       Int
-  completed  Int              @default(0)
-
-  entries    ChallengeEntry[]
+  id        Int              @id @default(autoincrement())
+  userId    Int
+  goal      Int
+  completed Int              @default(0)
+  endDate   DateTime
+  name      String
+  startDate DateTime
+  entries   ChallengeEntry[]
+  user      User             @relation(fields: [userId], references: [id])
 }
 
 model ChallengeEntry {
   id          Int              @id @default(autoincrement())
-  challenge   ReadingChallenge @relation(fields: [challengeId], references: [id])
   challengeId Int
-  book        Book             @relation(fields: [bookId], references: [id])
   bookId      Int
   finishedAt  DateTime
+  book        Book             @relation(fields: [bookId], references: [id])
+  challenge   ReadingChallenge @relation(fields: [challengeId], references: [id])
 }
 
 model Friendship {
-  id       Int  @id @default(autoincrement())
-  user     User @relation("UserFriends", fields: [userId], references: [id])
-  userId   Int
-  friend   User @relation("FriendOf", fields: [friendId], references: [id])
-  friendId Int
-
+  id        Int      @id @default(autoincrement())
+  userId    Int
+  friendId  Int
   createdAt DateTime @default(now())
+  friend    User     @relation("FriendOf", fields: [friendId], references: [id])
+  user      User     @relation("UserFriends", fields: [userId], references: [id])
 
   @@unique([userId, friendId])
 }
