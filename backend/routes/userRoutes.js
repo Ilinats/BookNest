@@ -365,7 +365,7 @@ router.get('/:id/stats', userController.getUserStats);
 
 /**
  * @swagger
- * /api/user/profile:
+ * /api/users/profile:
  *   get:
  *     summary: Get user profile
  *     description: Retrieve the current user's profile information
@@ -393,7 +393,7 @@ router.get('/profile', userController.getProfile);
 
 /**
  * @swagger
- * /api/user/reviews:
+ * /api/users/reviews:
  *   get:
  *     summary: Get user reviews
  *     description: Retrieve all reviews written by the current user

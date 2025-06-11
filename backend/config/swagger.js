@@ -28,6 +28,11 @@ const options = {
         description: 'Production server'
       }
     ],
+    security: [
+      {
+        bearerAuth: []
+      }
+    ],
     tags: [
       {
         name: 'Books',
@@ -415,9 +420,8 @@ const options = {
     }
   },
   apis: [
-    path.join(__dirname, '../routes/auth.js'),
-    path.join(__dirname, '../controllers/authController.js'),
-    path.join(__dirname, '../index.js')
+    './routes/*.js',
+    './index.js'
   ]
 };
 
