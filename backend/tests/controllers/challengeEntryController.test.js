@@ -1,3 +1,9 @@
+// Test environment setup
+beforeAll(() => {
+  process.env.NODE_ENV = 'test';
+  process.env.JWT_SECRET = 'test-secret';
+});
+
 const challengeEntryController = require('../../controllers/challengeEntryController');
 const challengeEntryService = require('../../services/challengeEntryService');
 
@@ -135,4 +141,4 @@ describe('Challenge Entry Controller', () => {
       expect(mockNext).toHaveBeenCalledWith(error);
     });
   });
-}); 
+});

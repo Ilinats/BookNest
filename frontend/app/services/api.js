@@ -103,6 +103,12 @@ export const challenges = {
   getChallenge: (id) => api.get(`/api/reading-challenges/${id}`),
 };
 
+// Friendships endpoints
+export const friendships = {
+  getUserFriendships: (userId) => api.get(`/api/friendships/user/${userId}`),
+  createFriendship: (data) => api.post('/api/friendships', data),
+};
+
 // Challenge entries endpoints
 export const challengeEntries = {
   getChallengeEntries: (challengeId) => api.get(`/api/challenge-entries/challenge/${challengeId}`),
@@ -121,6 +127,15 @@ export const user = {
     console.error('Reviews fetch error:', error);  
     throw error;
   }),
+  searchByUsername: async (username) => {
+    try {
+      const response = await api.get(`/api/users/search?username=${username}`);
+      return response;
+    } catch (error) {
+      console.error('Search by username error:', error);
+      throw error;
+    }
+  }
 };
 
 export default api;

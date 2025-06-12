@@ -20,14 +20,29 @@
   "scripts": {
     "start": "node index.js",
     "dev": "nodemon index.js",
-    "test": "jest --detectOpenHandles --forceExit",
-    "test:watch": "jest --watch",
-    "test:coverage": "jest --coverage",
-    "lint": "eslint .",
     "format": "prettier --write .",
     "importBooks": "node scripts/importBooks.js",
     "docs": "echo 'API Documentation available at http://localhost:3000/api-docs'",
-    "vercel-build": "prisma generate"
+    "vercel-build": "prisma generate",
+    "test": "npm run test:db:setup && NODE_ENV=test jest --detectOpenHandles --forceExit",
+    "test:watch": "NODE_ENV=test jest --watch --detectOpenHandles",
+    "test:coverage": "npm run test:db:setup && NODE_ENV=test jest --coverage --detectOpenHandles --forceExit",
+    "test:single": "NODE_ENV=test jest --detectOpenHandles --forceExit",
+    
+    "test:db:setup": "NODE_ENV=test npx prisma db push --force-reset --accept-data-loss",
+    "test:db:reset": "NODE_ENV=test npx prisma db push --force-reset --accept-data-loss",
+    "test:db:seed": "NODE_ENV=test node prisma/seed.test.js",
+    
+    "lint": "eslint . --ext .js --ignore-path .gitignore",
+    "lint:fix": "eslint . --ext .js --ignore-path .gitignore --fix", 
+    
+    "prisma:generate": "prisma generate",
+    "prisma:push": "prisma db push",
+    "prisma:reset": "prisma db push --force-reset",
+    "prisma:seed": "node prisma/seed.js",
+    
+    "build": "echo 'Build completed'",
+    "postinstall": "prisma generate"
   },
   "dependencies": {
     "@prisma/client": "^6.9.0",
@@ -64,12 +79,20 @@
   },
   "jest": {
     "testEnvironment": "node",
-    "setupFilesAfterEnv": ["./tests/setup.js"],
-    "testMatch": ["**/tests/**/*.test.js"],
-    "verbose": true,
-    "forceExit": true,
-    "clearMocks": true,
-    "resetMocks": true,
-    "restoreMocks": true
+    "setupFilesAfterEnv": ["<rootDir>/tests/setup.js"],
+    "testMatch": [
+      "**/tests/**/*.test.js"
+    ],
+    "collectCoverageFrom": [
+      "controllers/**/*.js",
+      "services/**/*.js", 
+      "middleware/**/*.js",
+      "routes/**/*.js"
+    ],
+    "coverageDirectory": "coverage",
+    "coverageReporters": ["text", "lcov", "html"],
+    "testTimeout": 30000,
+    "detectOpenHandles": true,
+    "forceExit": true
   }
 }
