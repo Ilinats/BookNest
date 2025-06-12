@@ -60,7 +60,10 @@ export const books = {
       minPages: Math.max(0, parseInt(filters.minPages) || 0),
       maxPages: Math.min(10000, parseInt(filters.maxPages) || 1000),
       minRating: Math.max(0, Math.min(5, parseFloat(filters.minRating) || 0)),
-      maxRating: Math.max(0, Math.min(5, parseFloat(filters.maxRating) || 5))
+      maxRating: Math.max(0, Math.min(5, parseFloat(filters.maxRating) || 5)),
+      genres: filters.genres?.length > 0 ? filters.genres : undefined,
+      tropes: filters.tropes?.length > 0 ? filters.tropes : undefined,
+      moods: filters.moods?.length > 0 ? filters.moods : undefined
     };
     
     // Remove empty/invalid parameters
@@ -80,6 +83,10 @@ export const books = {
   getById: (id) => api.get(`/api/books/${id}`),
   addReview: (bookId, review) => api.post(`/api/books/${bookId}/reviews`, review),
   markAsRead: (bookId) => api.post(`/api/books/${bookId}/read`),
+  getGenres: () => api.get('/api/genres').then(response => response.data || []),
+  getTropes: () => api.get('/api/tropes').then(response => response.data || []),
+  getMoods: () => api.get('/api/moods').then(response => response.data || []),
+  create: (bookData) => api.post('/api/books', bookData),
 };
 
 // Library endpoints
