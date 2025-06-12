@@ -662,35 +662,11 @@ const styles = StyleSheet.create({
     fontSize: 12,
     color: '#666',
   },
-  ratingContainer: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    backgroundColor: '#FFF9E6',
-    paddingHorizontal: 8,
-    paddingVertical: 4,
-    borderRadius: 12,
-  },
-  rating: {
-    marginLeft: 4,
-    fontSize: 14,
-    fontWeight: '600',
-    color: '#FFB800',
-  },
   bookInfo: {
     marginBottom: 8,
     paddingBottom: 8,
     borderBottomWidth: 1,
     borderBottomColor: '#F0F0F0',
-  },
-  bookTitle: {
-    fontSize: 15,
-    fontWeight: '600',
-    color: '#333',
-    marginBottom: 2,
-  },
-  bookAuthor: {
-    fontSize: 13,
-    color: '#666',
   },
   reviewText: {
     fontSize: 14,

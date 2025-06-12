@@ -25,10 +25,42 @@ export default function SearchScreen() {
   const [pageRange, setPageRange] = useState([0, APP_CONFIG.MAX_PAGES]);
   const [minRating, setMinRating] = useState(APP_CONFIG.MIN_RATING);
   const [maxRating, setMaxRating] = useState(APP_CONFIG.MAX_RATING);
+  const [selectedGenres, setSelectedGenres] = useState([]);
+  const [selectedTropes, setSelectedTropes] = useState([]);
+  const [selectedMoods, setSelectedMoods] = useState([]);
   const [debouncedQuery, setDebouncedQuery] = useState('');
   const [showFilters, setShowFilters] = useState(false);
 
   const { execute: searchBooks, data, loading, error } = useApi(books.search);
+  const { execute: fetchGenres, data: genresData, loading: loadingGenres } = useApi(books.getGenres);
+  const { execute: fetchTropes, data: tropesData, loading: loadingTropes } = useApi(books.getTropes);
+  const { execute: fetchMoods, data: moodsData, loading: loadingMoods } = useApi(books.getMoods);
+
+  // Fetch filter options when component mounts
+  useEffect(() => {
+    const fetchFilterOptions = async () => {
+      try {
+        await Promise.all([
+          fetchGenres(),
+          fetchTropes(),
+          fetchMoods()
+        ]);
+      } catch (error) {
+        console.error('Error fetching filter options:', error);
+        Alert.alert(
+          'Error',
+          'Failed to load filter options. Please try again later.'
+        );
+      }
+    };
+
+    fetchFilterOptions();
+  }, []);
+
+  // Extract lists from API responses
+  const genres = genresData?.genres || [];
+  const tropes = tropesData?.tropes || [];
+  const moods = moodsData?.moods || [];
 
   useEffect(() => {
     const timeoutId = setTimeout(() => {
@@ -56,7 +88,10 @@ export default function SearchScreen() {
   }, [error]);
 
   const handleSearch = useCallback(async () => {
-    if (!debouncedQuery.trim()) {
+    if (!debouncedQuery.trim() && 
+        selectedGenres.length === 0 && 
+        selectedTropes.length === 0 && 
+        selectedMoods.length === 0) {
       return;
     }
 
@@ -66,13 +101,16 @@ export default function SearchScreen() {
         maxPages: Math.round(pageRange[1]),
         minRating: parseFloat(minRating.toFixed(1)),
         maxRating: parseFloat(maxRating.toFixed(1)),
+        genres: selectedGenres,
+        tropes: selectedTropes,
+        moods: selectedMoods,
       };
 
       await searchBooks(debouncedQuery, filters);
     } catch (error) {
       console.error('Search error:', error);
     }
-  }, [debouncedQuery, pageRange, minRating, maxRating, searchBooks]);
+  }, [debouncedQuery, pageRange, minRating, maxRating, selectedGenres, selectedTropes, selectedMoods, searchBooks]);
 
   const handleManualSearch = () => {
     if (!searchQuery.trim()) {
@@ -81,6 +119,67 @@ export default function SearchScreen() {
     }
     setDebouncedQuery(searchQuery);
   };
+
+  const toggleFilter = (category, value) => {
+    switch (category) {
+      case 'genre':
+        setSelectedGenres(prev => 
+          prev.includes(value) 
+            ? prev.filter(g => g !== value)
+            : [...prev, value]
+        );
+        break;
+      case 'trope':
+        setSelectedTropes(prev => 
+          prev.includes(value) 
+            ? prev.filter(t => t !== value)
+            : [...prev, value]
+        );
+        break;
+      case 'mood':
+        setSelectedMoods(prev => 
+          prev.includes(value) 
+            ? prev.filter(m => m !== value)
+            : [...prev, value]
+        );
+        break;
+    }
+  };
+
+  const renderFilterChips = (items, selectedItems, category) => (
+    <View style={styles.filterChipsContainer}>
+      {items.map((item) => (
+        <TouchableOpacity
+          key={item}
+          style={[
+            styles.filterChip,
+            selectedItems.includes(item) && styles.filterChipSelected
+          ]}
+          onPress={() => toggleFilter(category, item)}
+        >
+          <Text style={[
+            styles.filterChipText,
+            selectedItems.includes(item) && styles.filterChipTextSelected
+          ]}>
+            {item}
+          </Text>
+        </TouchableOpacity>
+      ))}
+    </View>
+  );
+
+  const renderFilterSection = (title, items, selectedItems, category, loading) => (
+    <View style={styles.filterSection}>
+      <Text style={styles.filterTitle}>{title}</Text>
+      {loading ? (
+        <ActivityIndicator size="small" color="#007AFF" style={styles.filterLoading} />
+      ) : items.length > 0 ? (
+        renderFilterChips(items, selectedItems, category)
+      ) : (
+        <Text style={styles.noFiltersText}>No {title.toLowerCase()} available</Text>
+      )}
+    </View>
+  );
 
   // Extract books from response
   const searchResults = data?.books || [];
@@ -131,7 +230,7 @@ export default function SearchScreen() {
           <Ionicons name="search" size={20} color="#666" style={styles.searchIcon} />
           <TextInput
             style={styles.searchInput}
-            placeholder="Search by title or author..."
+            placeholder="Search by title, author, genre, trope, or mood..."
             value={searchQuery}
             onChangeText={setSearchQuery}
             onSubmitEditing={handleManualSearch}
@@ -159,8 +258,19 @@ export default function SearchScreen() {
         </TouchableOpacity>
       </View>
 
+      <TouchableOpacity 
+        style={styles.addBookButton}
+        onPress={() => router.push('/books/add')}>
+        <Ionicons name="add-circle" size={24} color="#007AFF" />
+        <Text style={styles.addBookText}>Add New Book</Text>
+      </TouchableOpacity>
+
       {showFilters && (
         <ScrollView style={styles.filtersContainer}>
+          {renderFilterSection('Genres', genres, selectedGenres, 'genre', loadingGenres)}
+          {renderFilterSection('Tropes', tropes, selectedTropes, 'trope', loadingTropes)}
+          {renderFilterSection('Moods', moods, selectedMoods, 'mood', loadingMoods)}
+
           <View style={styles.filterSection}>
             <Text style={styles.filterTitle}>Page Range</Text>
             <View style={styles.sliderContainer}>
@@ -241,9 +351,19 @@ export default function SearchScreen() {
 
           <View style={styles.filterButtons}>
             <TouchableOpacity 
-              style={[styles.searchButton, !searchQuery.trim() && styles.searchButtonDisabled]} 
+              style={[
+                styles.searchButton, 
+                (!searchQuery.trim() && 
+                 selectedGenres.length === 0 && 
+                 selectedTropes.length === 0 && 
+                 selectedMoods.length === 0) && 
+                styles.searchButtonDisabled
+              ]} 
               onPress={handleManualSearch}
-              disabled={!searchQuery.trim()}>
+              disabled={!searchQuery.trim() && 
+                       selectedGenres.length === 0 && 
+                       selectedTropes.length === 0 && 
+                       selectedMoods.length === 0}>
               <Ionicons name="search" size={20} color="#fff" style={styles.searchButtonIcon} />
               <Text style={styles.searchButtonText}>Search Books</Text>
             </TouchableOpacity>
@@ -254,6 +374,9 @@ export default function SearchScreen() {
                 setPageRange([0, APP_CONFIG.MAX_PAGES]);
                 setMinRating(APP_CONFIG.MIN_RATING);
                 setMaxRating(APP_CONFIG.MAX_RATING);
+                setSelectedGenres([]);
+                setSelectedTropes([]);
+                setSelectedMoods([]);
               }}>
               <Text style={styles.resetButtonText}>Reset Filters</Text>
             </TouchableOpacity>
@@ -502,5 +625,54 @@ const styles = StyleSheet.create({
     fontSize: 14,
     color: '#666',
     textAlign: 'center',
+  },
+  filterChipsContainer: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    marginTop: 8,
+  },
+  filterChip: {
+    backgroundColor: '#f0f0f0',
+    borderRadius: 16,
+    paddingHorizontal: 12,
+    paddingVertical: 6,
+    margin: 4,
+    borderWidth: 1,
+    borderColor: '#ddd',
+  },
+  filterChipSelected: {
+    backgroundColor: '#007AFF',
+    borderColor: '#007AFF',
+  },
+  filterChipText: {
+    fontSize: 14,
+    color: '#666',
+  },
+  filterChipTextSelected: {
+    color: '#fff',
+  },
+  filterLoading: {
+    marginTop: 8,
+  },
+  noFiltersText: {
+    fontSize: 14,
+    color: '#666',
+    fontStyle: 'italic',
+    marginTop: 8,
+  },
+  addBookButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    padding: 12,
+    backgroundColor: '#fff',
+    borderBottomWidth: 1,
+    borderBottomColor: '#e0e0e0',
+  },
+  addBookText: {
+    marginLeft: 8,
+    fontSize: 16,
+    color: '#007AFF',
+    fontWeight: '600',
   },
 }); 
