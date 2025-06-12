@@ -28,6 +28,8 @@ const sendFriendRequest = async (req, res) => {
 const getUserFriends = async (req, res) => {
   try {
     const { userId } = req.params;
+    console.log('Getting friends for user:', userId);
+    
     const friendships = await prisma.friendship.findMany({
       where: {
         OR: [
@@ -53,6 +55,8 @@ const getUserFriends = async (req, res) => {
       }
     });
 
+    console.log('Found friendships:', friendships);
+
     // Transform the response to show friends regardless of who initiated
     const friends = friendships.map(friendship => {
       const friend = friendship.userId === parseInt(userId) 
@@ -65,9 +69,18 @@ const getUserFriends = async (req, res) => {
       };
     });
 
-    res.json(friends);
+    console.log('Transformed friends:', friends);
+
+    res.json({
+      success: true,
+      data: friends
+    });
   } catch (error) {
-    res.status(400).json({ error: error.message });
+    console.error('Error getting user friends:', error);
+    res.status(400).json({ 
+      success: false,
+      error: error.message 
+    });
   }
 };
 

@@ -653,4 +653,29 @@ router.get('/user/:userId', reviewController.getReviewsByUser);
  */
 router.get('/book/:bookId', reviewController.getReviewsByBook);
 
+/**
+ * @swagger
+ * /api/reviews/friends/{userId}:
+ *   get:
+ *     summary: Get reviews from user's friends
+ *     tags: [Reviews]
+ *     parameters:
+ *       - in: path
+ *         name: userId
+ *         required: true
+ *         schema:
+ *           type: string
+ *         description: ID of the user whose friends' reviews to get
+ *     responses:
+ *       200:
+ *         description: List of reviews from friends
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: array
+ *               items:
+ *                 $ref: '#/components/schemas/Review'
+ */
+router.get('/friends/:userId', reviewController.getFriendReviews);
+
 module.exports = router;

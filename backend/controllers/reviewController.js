@@ -156,6 +156,22 @@ class ReviewController {
             next(error);
         }
     };
+
+    getFriendReviews = async (req, res, next) => {
+        try {
+            if (!this.reviewService) {
+                this.initializeService(req.prisma);
+            }
+
+            const { userId } = req.params;
+            const reviews = await this.reviewService.getFriendReviews(userId);
+            
+            res.status(200).json(reviews);
+        } catch (error) {
+            console.error('Error in getFriendReviews:', error);
+            next(error);
+        }
+    };
 }
 
 module.exports = new ReviewController();

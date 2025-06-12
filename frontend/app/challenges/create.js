@@ -30,28 +30,32 @@ export default function CreateChallengeScreen() {
     challenges.create
   );
 
-  const handleCreateChallenge = async () => {
-    if (!newChallenge.name || !newChallenge.goal) {
-      Alert.alert('Error', 'Please fill in all required fields');
-      return;
-    }
+const handleCreateChallenge = async () => {
+    console.log('Creating challenge with user:', user);
+  console.log('Creating challenge with data:', {
+    ...newChallenge,
+    userId: user.data.id,
+    goal: parseInt(newChallenge.goal)
+  });
+  
+  if (!newChallenge.name || !newChallenge.goal) {
+    Alert.alert('Error', 'Please fill in all required fields');
+    return;
+  }
 
-    try {
-      await createChallenge({
-        ...newChallenge,
-        userId: user.data.id,
-        goal: parseInt(newChallenge.goal)
-      });
-      Alert.alert('Success', 'Challenge created successfully', [
-        {
-          text: 'OK',
-          onPress: () => router.push('/(tabs)/challenges')
-        }
-      ]);
-    } catch (error) {
-      Alert.alert('Error', 'Failed to create challenge');
-    }
-  };
+  try {
+    const result = await createChallenge({
+      ...newChallenge,
+      userId: user.data.id,
+      goal: parseInt(newChallenge.goal)
+    });
+    console.log('Challenge created successfully:', result);
+    router.push('/challenges');
+  } catch (error) {
+    console.error('Challenge creation failed:', error);
+    Alert.alert('Error', 'Failed to create challenge');
+  }
+};
 
   return (
     <SafeAreaView style={styles.container}>

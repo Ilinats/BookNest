@@ -1,102 +1,53 @@
-const { PrismaClient } = require('@prisma/client');
-const prisma = new PrismaClient();
+const challengeEntryService = require('../services/challengeEntryService');
 
 // Add a book to a challenge
-const addBookToChallenge = async (req, res) => {
+const addBookToChallenge = async (req, res, next) => {
   try {
     const { challengeId, bookId, finishedAt } = req.body;
-    const entry = await prisma.challengeEntry.create({
-      data: {
-        challengeId: parseInt(challengeId),
-        bookId: parseInt(bookId),
-        finishedAt: new Date(finishedAt)
-      },
-      include: {
-        book: true
-      }
+    const entry = await challengeEntryService.addBookToChallenge({
+      challengeId,
+      bookId,
+      finishedAt
     });
-
-    // Update the challenge's completed count
-    await prisma.readingChallenge.update({
-      where: { id: parseInt(challengeId) },
-      data: {
-        completed: {
-          increment: 1
-        }
-      }
-    });
-
     res.status(201).json(entry);
   } catch (error) {
-    res.status(400).json({ error: error.message });
+    next(error);
   }
 };
 
 // Get all entries in a challenge
-const getChallengeEntries = async (req, res) => {
+const getChallengeEntries = async (req, res, next) => {
   try {
     const { challengeId } = req.params;
-    const entries = await prisma.challengeEntry.findMany({
-      where: { challengeId: parseInt(challengeId) },
-      include: {
-        book: true
-      }
-    });
+    const entries = await challengeEntryService.getChallengeEntries(parseInt(challengeId));
     res.json(entries);
   } catch (error) {
-    res.status(400).json({ error: error.message });
+    next(error);
   }
 };
 
 // Get a specific challenge entry
-const getChallengeEntry = async (req, res) => {
+const getChallengeEntry = async (req, res, next) => {
   try {
     const { id } = req.params;
-    const entry = await prisma.challengeEntry.findUnique({
-      where: { id: parseInt(id) },
-      include: {
-        book: true
-      }
-    });
+    const entry = await challengeEntryService.getChallengeEntry(parseInt(id));
     if (!entry) {
       return res.status(404).json({ error: 'Challenge entry not found' });
     }
     res.json(entry);
   } catch (error) {
-    res.status(400).json({ error: error.message });
+    next(error);
   }
 };
 
 // Remove a book from a challenge
-const removeBookFromChallenge = async (req, res) => {
+const removeBookFromChallenge = async (req, res, next) => {
   try {
-    const { id } = req.params;
-    const entry = await prisma.challengeEntry.findUnique({
-      where: { id: parseInt(id) }
-    });
-
-    if (!entry) {
-      return res.status(404).json({ error: 'Challenge entry not found' });
-    }
-
-    // Delete the entry
-    await prisma.challengeEntry.delete({
-      where: { id: parseInt(id) }
-    });
-
-    // Update the challenge's completed count
-    await prisma.readingChallenge.update({
-      where: { id: entry.challengeId },
-      data: {
-        completed: {
-          decrement: 1
-        }
-      }
-    });
-
-    res.status(204).send();
+    const { entryId } = req.params;
+    await challengeEntryService.removeBookFromChallenge(parseInt(entryId));
+    res.json({ message: 'Book removed from challenge successfully' });
   } catch (error) {
-    res.status(400).json({ error: error.message });
+    next(error);
   }
 };
 
@@ -105,4 +56,4 @@ module.exports = {
   getChallengeEntries,
   getChallengeEntry,
   removeBookFromChallenge
-}; 
+};

@@ -405,6 +405,52 @@ class ReviewService {
         return { moods, tropes, genres };
     }
 
+    async getFriendReviews(userId) {
+        try {
+            const userIdInt = parseInt(userId);
+            if (isNaN(userIdInt)) {
+                throw new Error('Invalid user ID');
+            }
+
+            const friendships = await this.prisma.friendship.findMany({
+                where: {
+                    OR: [
+                        { userId: userIdInt },
+                        { friendId: userIdInt }
+                    ]
+                },
+                include: {
+                    user: true,
+                    friend: true
+                }
+            });
+
+            const friendIds = friendships.map(friendship => 
+                friendship.userId === userIdInt ? friendship.friendId : friendship.userId
+            );
+
+            const reviews = await this.prisma.review.findMany({
+                where: {
+                    userId: {
+                        in: friendIds
+                    }
+                },
+                include: {
+                    user: true,
+                    book: true
+                },
+                orderBy: {
+                    createdAt: 'desc'
+                }
+            });
+
+            return reviews;
+        } catch (error) {
+            console.error('Error in getFriendReviews:', error);
+            throw error;
+        }
+    }
+
     async updateBookRatingStats(bookId) {
         // Get all reviews for the book
         const reviews = await this.prisma.review.findMany({

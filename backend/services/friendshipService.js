@@ -4,6 +4,26 @@ class FriendshipService {
   }
 
   async sendFriendRequest(data) {
+    // Check if friendship already exists
+    const existingFriendship = await this.prisma.friendship.findFirst({
+      where: {
+        OR: [
+          {
+            userId: data.userId,
+            friendId: data.friendId
+          },
+          {
+            userId: data.friendId,
+            friendId: data.userId
+          }
+        ]
+      }
+    });
+
+    if (existingFriendship) {
+      throw new Error('Friendship already exists');
+    }
+
     return this.prisma.friendship.create({
       data,
       include: {

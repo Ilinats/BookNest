@@ -78,7 +78,7 @@ export default function ChallengesScreen() {
       key={challenge.id}
       style={styles.challengeCard}
       onPress={() => router.push(`/challenge/${challenge.id}`)}>
-      <Text style={styles.challengeTitle}>{challenge.name}</Text>
+      <Text style={styles.challengeTitle}>{challenge.title}</Text>
       <Text style={styles.challengeDescription}>
         {new Date(challenge.startDate).toLocaleDateString()} - {new Date(challenge.endDate).toLocaleDateString()}
       </Text>
@@ -87,12 +87,12 @@ export default function ChallengesScreen() {
           <View 
             style={[
               styles.progressBar, 
-              { width: `${Math.min(100, (challenge.completed / challenge.goal) * 100)}%` }
+              { width: `${Math.min(100, (challenge.completedBooks / challenge.targetBooks) * 100)}%` }
             ]} 
           />
         </View>
         <Text style={styles.progressText}>
-          {challenge.completed}/{challenge.goal} books completed
+          {challenge.completedBooks}/{challenge.targetBooks} books completed
         </Text>
       </View>
     </TouchableOpacity>

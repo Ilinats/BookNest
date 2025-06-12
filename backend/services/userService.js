@@ -50,6 +50,34 @@ class UserService {
         };
     }
 
+    async searchByUsername(username) {
+        if (!username) {
+            throw new Error('Username is required');
+        }
+
+        console.log('Searching for username:', username);
+
+        const users = await this.prisma.user.findMany({
+            where: {
+                username: {
+                    contains: username,
+                    mode: 'insensitive'
+                }
+            },
+            select: {
+                id: true,
+                username: true,
+                email: true,
+                createdAt: true
+            },
+            take: 10,
+            orderBy: { username: 'asc' }
+        });
+
+        console.log('Search results:', users);
+        return users;
+    }
+
     async getUserById(id) {
         console.log('getUserById - id:', id);
         const user = await this.prisma.user.findUnique({
@@ -142,7 +170,6 @@ class UserService {
         const saltRounds = 10;
         const hashedPassword = await bcrypt.hash(password, saltRounds);
 
-        // Create user and Read folder in a transaction
         return await this.prisma.$transaction(async (prisma) => {
             const newUser = await prisma.user.create({
                 data: {
@@ -158,14 +185,23 @@ class UserService {
                 }
             });
 
-            // Create Read folder for the user
-            await prisma.library.create({
-                data: {
-                    name: 'Read',
-                    type: 'READ',
-                    userId: newUser.id
-                }
-            });
+            const defaultLibraries = [
+                { name: 'Want to Read', type: 'WANT_TO_READ' },
+                { name: 'Currently Reading', type: 'CURRENTLY_READING' },
+                { name: 'Read', type: 'READ' }
+            ];
+
+            await Promise.all(
+                defaultLibraries.map(library =>
+                    prisma.library.create({
+                        data: {
+                            name: library.name,
+                            type: library.type,
+                            userId: newUser.id
+                        }
+                    })
+                )
+            );
 
             return newUser;
         });
